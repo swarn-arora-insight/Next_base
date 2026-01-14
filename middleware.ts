@@ -48,5 +48,7 @@ export function middleware(req: NextRequest) {
 }
 
 export const config = {
-  matcher: ["/((?!_next|api).*)"], // Protect ALL routes except api & assets
+  matcher: [
+    "/((?!_next|api|favicon.ico|logo.png|.*\\.(?:png|jpg|jpeg|svg|webp)).*)",
+  ],
 };

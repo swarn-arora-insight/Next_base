@@ -34,8 +34,8 @@ export default function RootLayout({
         suppressHydrationWarning
       >
         <QueryProvider>
-          <ReduxProviders>
-            <PersistProviders>
+          {/* <ReduxProviders> */}
+            {/* <PersistProviders> */}
                 <ThemeProvider
                   attribute="class"
                   defaultTheme="system"
@@ -44,8 +44,8 @@ export default function RootLayout({
                 >
                   {children}
                 </ThemeProvider>
-            </PersistProviders>
-          </ReduxProviders>
+            {/* </PersistProviders> */}
+          {/* </ReduxProviders> */}
         </QueryProvider>
       </body>
     </html>

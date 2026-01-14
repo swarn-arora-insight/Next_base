@@ -1,7 +1,7 @@
 import { configureStore, combineReducers } from "@reduxjs/toolkit";
 import { persistReducer, persistStore } from "redux-persist";
 import storage from "redux-persist/lib/storage"; // defaults to localStorage for web
-import themeReducer from "./theme-slice"
+
 
 const persistConfig = {
   key: "root",
@@ -9,7 +9,6 @@ const persistConfig = {
   whitelist: ["theme"], // add reducers you want to persist here
 };
 const rootReducer = combineReducers({
-  theme: themeReducer, 
 });
 const persistedReducer = persistReducer(persistConfig, rootReducer);
 export const store = configureStore({

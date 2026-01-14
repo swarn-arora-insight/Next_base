@@ -2,24 +2,20 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import Logo from "@/components/logo";
-import Menu from "@/components/menu";
 import { ModeToggle } from "@/components/toggleMode";
-import { Button, buttonVariants } from "@/components/ui/button";
+import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
-import {
-  Sheet,
-  SheetContent,
-  SheetHeader,
-  SheetTitle,
-  SheetTrigger,
-} from "@/components/ui/sheet";
-import { Menu as MenuIcon, Palette } from "lucide-react";
-import { ThemeCustomizer } from "../custom-theme/page";
+import { LogOut, User, UserRoundCog } from "lucide-react";
 import { useRouter } from "next/navigation";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 
 export default function Header() {
   const [addBorder, setAddBorder] = useState(false);
-  const [isThemeOpen, setIsThemeOpen] = useState(false);
   const router = useRouter();
   useEffect(() => {
     const handleScroll = () => {
@@ -41,62 +37,48 @@ export default function Header() {
           "sticky top-0 z-50 py-2 bg-gray-200/80 dark:bg-gray-800/80 backdrop-blur-md shadow-sm"
         )}
       >
-        <div className="container mx-auto px-4 flex justify-between items-center">
-          {/* Logo */}
+        <div className="mx-auto px-4 flex justify-between items-center">
           <Link
             href="/"
             className="relative flex items-center space-x-2"
             title="brand-logo"
           >
-            <Logo className="w-auto h-4 dark:invert" />
-            <span className="font-bold text-xl">Template</span>
+            <Logo className="w-auto dark:invert" />
+            <span className="font-bold text-xl">Nextbase</span>
           </Link>
 
-          {/* Desktop Menu */}
-          <div className="hidden lg:flex items-center gap-6">
-            <nav>
-              <Menu />
-            </nav>
-
+          <div className="flex items-center gap-6">
             <div className="flex items-center gap-3">
               <Button
-                onClick={() => setIsThemeOpen(true)}
                 variant="default"
+                title="User management"
                 size="sm"
-                className="bg-primary/80 text-white border border-gray-300/40"
+                onClick={() => router.push("/User-management")}
+                className="bg-indigo-500 hover:bg-indigo-600 cursor-pointer text-white"
               >
-                <Palette className="h-4 w-4 mr-1" />
-                Customize Theme
-              </Button>
-
-              <Button
-                onClick={() => router.push("/user-management")} 
-                variant="default"
-                size="sm"
-                className="bg-primary/80 border-gray-300/40 text-white"
-              >
-                User
+                <UserRoundCog className="h-4 w-4" />
               </Button>
 
               <ModeToggle />
-              <Button
-                variant="default"
-                size="sm"
-                className="bg-primary/80 text-white border border-gray-300/40"
-                onClick={logOut}
-              >
-                Logout
-              </Button>
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="default" size="sm"
+                    title="User profile"
+                  className="bg-indigo-500 hover:bg-indigo-600 cursor-pointer text-white">
+                    <User className="h-4 w-4" />
+                  </Button>
+                </DropdownMenuTrigger>
+
+                <DropdownMenuContent align="end" className="">
+                  <DropdownMenuItem onClick={logOut} className="cursor-pointer">
+                    <LogOut/>
+                    Logout
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
             </div>
           </div>
-
-          {/* Mobile Menu Button */}
-          <div className="lg:hidden">
-            <MobileNav />
-          </div>
         </div>
-
-        {/* Scroll Border */}
         <hr
           className={cn(
             "absolute w-full bottom-0 transition-opacity duration-300 ease-in-out",
@@ -104,43 +86,7 @@ export default function Header() {
           )}
         />
       </header>
-      <ThemeCustomizer isOpen={isThemeOpen} onOpenChange={setIsThemeOpen} />
     </>
   );
 }
 
-function MobileNav() {
-  return (
-    <Sheet>
-      <SheetTrigger>
-        <MenuIcon className="w-6 h-6 cursor-pointer" />
-      </SheetTrigger>
-      <SheetContent side="right" className="p-6 space-y-6">
-        <SheetHeader>
-          <SheetTitle className="text-left text-xl">Menu</SheetTitle>
-        </SheetHeader>
-
-        {/* Logo inside mobile drawer */}
-        <div className="flex items-center space-x-2 mb-2">
-          <Logo className="h-5 dark:invert" />
-          <span className="font-bold">Template</span>
-        </div>
-
-        {/* Mobile nav items */}
-        <div className="space-y-4">{/* <Menu mobile /> */}</div>
-
-        {/* Theme + Login */}
-        <div className="pt-6 space-y-4">
-          <ModeToggle />
-
-          <Link
-            href="/login"
-            className={cn(buttonVariants({ variant: "outline" }), "w-full")}
-          >
-            LogOut
-          </Link>
-        </div>
-      </SheetContent>
-    </Sheet>
-  );
-}
