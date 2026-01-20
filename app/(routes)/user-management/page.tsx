@@ -3,7 +3,6 @@
 import { useState } from "react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
-import OrganizationsTab from "./component/Organization";
 import {
   Dialog,
   DialogContent,
@@ -13,6 +12,8 @@ import {
 } from "@/components/ui/dialog";
 import { Plus } from "lucide-react";
 import { Input } from "@/components/ui/input";
+import OrganizationsTab from "./component/organization";
+
 
 const tabs = [
   { id: "organization", label: "Organization" },

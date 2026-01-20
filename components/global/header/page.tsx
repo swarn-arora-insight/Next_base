@@ -53,7 +53,7 @@ export default function Header() {
                 variant="default"
                 title="User management"
                 size="sm"
-                onClick={() => router.push("/User-management")}
+                onClick={() => router.push("/user-management")}
                 className="bg-indigo-500 hover:bg-indigo-600 cursor-pointer text-white"
               >
                 <UserRoundCog className="h-4 w-4" />
