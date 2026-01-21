@@ -13,6 +13,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { clearSession } from "@/utils/storage";
 
 export default function Header() {
   const [addBorder, setAddBorder] = useState(false);
@@ -26,7 +27,7 @@ export default function Header() {
   }, []);
 
   const logOut = () => {
-    document.cookie = "auth=; path=/; max-age=0";
+  clearSession();
     router.push("/login");
   };
 
@@ -39,7 +40,7 @@ export default function Header() {
       >
         <div className="mx-auto px-4 flex justify-between items-center">
           <Link
-            href="/"
+            href="/dashboard"
             className="relative flex items-center space-x-2"
             title="brand-logo"
           >
@@ -54,7 +55,7 @@ export default function Header() {
                 title="User management"
                 size="sm"
                 onClick={() => router.push("/user-management")}
-                className="bg-indigo-500 hover:bg-indigo-600 cursor-pointer text-white"
+                className="bg-primary hover:bg-primary/80 cursor-pointer text-text"
               >
                 <UserRoundCog className="h-4 w-4" />
               </Button>
@@ -64,7 +65,7 @@ export default function Header() {
                 <DropdownMenuTrigger asChild>
                   <Button variant="default" size="sm"
                     title="User profile"
-                  className="bg-indigo-500 hover:bg-indigo-600 cursor-pointer text-white">
+                  className="bg-primary hover:bg-primary/80 cursor-pointer text-text">
                     <User className="h-4 w-4" />
                   </Button>
                 </DropdownMenuTrigger>

@@ -7,13 +7,12 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Eye, EyeOff, LogIn } from "lucide-react";
+import { setToken } from "@/utils/storage";
 
 export default function LoginForm() {
   const router = useRouter();
-
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-
   const [emailError, setEmailError] = useState("");
   const [passwordError, setPasswordError] = useState("");
   const [authError, setAuthError] = useState("");
@@ -45,8 +44,7 @@ export default function LoginForm() {
       setAuthError("Invalid email or password");
       return;
     }
-
-    document.cookie = "auth=true; path=/";
+    setToken("logged-in");
     router.push("/dashboard");
   };
 
@@ -68,7 +66,7 @@ export default function LoginForm() {
             <div className="grid gap-1">
               <Label className="gap-1 mb-2">
                 Username
-                <span className="text-indigo-500">*</span>
+                <span className="text-primary">*</span>
               </Label>
               <Input
                 id="email"
@@ -77,17 +75,17 @@ export default function LoginForm() {
                 onChange={(e) => setEmail(e.target.value)}
                 placeholder="m@example.com"
                 className={
-                  emailError ? "border-red-500 focus-visible:ring-red-500" : ""
+                  emailError ? "border-destructive focus-visible:ring-destructive" : ""
                 }
               />
               {emailError && (
-                <span className="text-red-500 text-xs">{emailError}</span>
+                <span className="text-destructive text-xs">{emailError}</span>
               )}
             </div>
 
             <div className="grid gap-1">
               <Label className="gap-1 mb-2">
-                Password <span className="text-indigo-500">*</span>
+                Password <span className="text-primary">*</span>
               </Label>
 
               <div className="relative">
@@ -99,7 +97,7 @@ export default function LoginForm() {
                   placeholder="example123"
                   className={`pr-10 ${
                     passwordError
-                      ? "border-red-500 focus-visible:ring-red-500"
+                      ? "border-destructive focus-visible:ring-destructive"
                       : ""
                   }`}
                 />
@@ -107,7 +105,7 @@ export default function LoginForm() {
                 <button
                   type="button"
                   onClick={() => setShowPassword(!showPassword)}
-                   title={showPassword ? "Hide" : "Show"}
+                  title={showPassword ? "Hide" : "Show"}
                   className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-700 cursor-pointer"
                 >
                   {showPassword ? (
@@ -119,20 +117,20 @@ export default function LoginForm() {
               </div>
 
               {passwordError && (
-                <span className="text-red-500 text-xs">{passwordError}</span>
+                <span className="text-destructive text-xs">{passwordError}</span>
               )}
             </div>
 
             {/* AUTH ERROR */}
             {authError && (
-              <p className="text-red-600 text-sm text-center">{authError}</p>
+              <p className="text-destructive text-sm text-center">{authError}</p>
             )}
 
             <Button
               type="submit"
-              className="w-full mt-3 rounded-full bg-indigo-500 hover:bg-indigo-600 text-white"
+              className="w-full mt-3 rounded-full bg-primary text-text hover:bg-primary/80"
             >
-              <LogIn/>
+              <LogIn />
               Login
             </Button>
           </form>
