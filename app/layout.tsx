@@ -5,6 +5,7 @@ import { QueryProvider } from "@/providers/query-provider";
 import { ReduxProviders } from "@/providers/redux-provider";
 import { PersistProviders } from "@/providers/presist-provider";
 import { ThemeProvider } from "@/providers/theme-provider";
+import { Toaster } from "sonner";
 // import { PostHogProvider } from "@/provider/PostHogProvider";
 
 const geistSans = Geist({
@@ -35,16 +36,17 @@ export default function RootLayout({
       >
         <QueryProvider>
           {/* <ReduxProviders> */}
-            {/* <PersistProviders> */}
-                <ThemeProvider
-                  attribute="class"
-                  defaultTheme="system"
-                  enableSystem
-                  disableTransitionOnChange
-                >
-                  {children}
-                </ThemeProvider>
-            {/* </PersistProviders> */}
+          {/* <PersistProviders> */}
+          <ThemeProvider
+            attribute="class"
+            defaultTheme="system"
+            enableSystem
+            disableTransitionOnChange
+          >
+            {children}
+            <Toaster position="top-right" richColors />
+          </ThemeProvider>
+          {/* </PersistProviders> */}
           {/* </ReduxProviders> */}
         </QueryProvider>
       </body>

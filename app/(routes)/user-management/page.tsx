@@ -4,7 +4,19 @@ import { useState } from "react";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
 import { Plus, Building2, Shield, Users } from "lucide-react";
-import { TabItem } from "@/interface/interface";
+import type { LucideIcon } from "lucide-react";
+import { AddOrganizationDialog } from "./component/add-organization-dialog";
+import { AddRoleDialog } from "./component/add-role-dialog";
+import { AddUserDialog } from "./component/add-user-dialog";
+import Organization from "./component/organization";
+import Roles from "./component/roles";
+
+interface TabItem {
+  tab_name: string;
+  access: number;
+  add_button: string;
+  icon: LucideIcon;
+}
 
 // This will come from an API in the future
 const tabsList: TabItem[] = [
@@ -18,6 +30,11 @@ export default function UserManagement() {
     tabsList.length > 0 ? tabsList[0].tab_name.toLowerCase() : ""
   );
 
+  // Dialog states for each tab
+  const [isOrgDialogOpen, setIsOrgDialogOpen] = useState(false);
+  const [isRoleDialogOpen, setIsRoleDialogOpen] = useState(false);
+  const [isUserDialogOpen, setIsUserDialogOpen] = useState(false);
+
   // Filter tabs that user has access to
   const accessibleTabs = tabsList.filter((tab) => tab.access === 1);
 
@@ -26,10 +43,19 @@ export default function UserManagement() {
     return `Add ${tabName}`;
   };
 
-  // Handle add button click
+  // Handle add button click - opens the appropriate dialog
   const handleAddClick = (tabName: string) => {
-    console.log(`Add ${tabName} clicked`);
-    // Future: Open modal or navigate to add form
+    switch (tabName.toLowerCase()) {
+      case "organization":
+        setIsOrgDialogOpen(true);
+        break;
+      case "role":
+        setIsRoleDialogOpen(true);
+        break;
+      case "user":
+        setIsUserDialogOpen(true);
+        break;
+    }
   };
 
   if (accessibleTabs.length === 0) {
@@ -89,20 +115,41 @@ export default function UserManagement() {
         </div>
 
         {/* Tab Content Areas */}
-        {accessibleTabs.map((tab) => (
-          <TabsContent
-            key={`content-${tab.tab_name}`}
-            value={tab.tab_name.toLowerCase()}
-            className="mt-6"
-          >
-            <div className="rounded-lg border border-border bg-card p-6 shadow-sm">
-              <p className="text-muted-foreground">
-                {tab.tab_name} content will be displayed here.
-              </p>
-            </div>
-          </TabsContent>
-        ))}
+        <TabsContent value="organizations" className="mt-2">
+          <div className="rounded-lg border border-border bg-card p-3 shadow-sm">
+            <Organization />
+          </div>
+
+        </TabsContent>
+
+        <TabsContent value="roles" className="mt-2">
+          <div className="rounded-lg border border-border bg-card p-3 shadow-sm">
+            <Roles />
+          </div>
+        </TabsContent>
+
+        <TabsContent value="users" className="mt-6">
+          <div className="rounded-lg border border-border bg-card p-6 shadow-sm">
+            <p className="text-muted-foreground">
+              Users content will be displayed here.
+            </p>
+          </div>
+        </TabsContent>
       </Tabs>
+
+      {/* Dialogs */}
+      <AddOrganizationDialog
+        open={isOrgDialogOpen}
+        onOpenChange={setIsOrgDialogOpen}
+      />
+      <AddRoleDialog
+        open={isRoleDialogOpen}
+        onOpenChange={setIsRoleDialogOpen}
+      />
+      <AddUserDialog
+        open={isUserDialogOpen}
+        onOpenChange={setIsUserDialogOpen}
+      />
     </div>
   );
 }

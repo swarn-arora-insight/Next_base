@@ -8,6 +8,8 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Eye, EyeOff, LogIn } from "lucide-react";
 import { setToken } from "@/utils/storage";
+import { loginApi } from "../api";
+import { toast } from "sonner";
 
 export default function LoginForm() {
   const router = useRouter();
@@ -17,36 +19,36 @@ export default function LoginForm() {
   const [passwordError, setPasswordError] = useState("");
   const [authError, setAuthError] = useState("");
   const [showPassword, setShowPassword] = useState(false);
-  const VALID_EMAIL = "amit123@gmail.com";
-  const VALID_PASSWORD = "amit123";
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setEmailError("");
     setPasswordError("");
     setAuthError("");
 
     let isValid = true;
-
     if (!email.trim()) {
       setEmailError("Email is required");
       isValid = false;
     }
-
     if (!password.trim()) {
       setPasswordError("Password is required");
       isValid = false;
     }
-
     if (!isValid) return;
 
-    if (email !== VALID_EMAIL || password !== VALID_PASSWORD) {
-      setAuthError("Invalid email or password");
-      return;
+    try {
+      const data = await loginApi({ email, password });
+
+      // Navigate after a tiny delay to ensure localStorage has the token
+      setTimeout(() => {
+        router.push("/dashboard");
+      }, 50);
+    } catch (err: unknown) {
+      setAuthError("Login failed");
     }
-    setToken("logged-in");
-    router.push("/dashboard");
   };
+
 
   return (
     <div className="min-h-screen flex items-center justify-center">
@@ -65,8 +67,7 @@ export default function LoginForm() {
           <form onSubmit={handleSubmit} className="grid gap-4">
             <div className="grid gap-1">
               <Label className="gap-1 mb-2">
-                Username
-                <span className="text-primary">*</span>
+                Username <span className="text-primary">*</span>
               </Label>
               <Input
                 id="email"
@@ -75,7 +76,9 @@ export default function LoginForm() {
                 onChange={(e) => setEmail(e.target.value)}
                 placeholder="m@example.com"
                 className={
-                  emailError ? "border-destructive focus-visible:ring-destructive" : ""
+                  emailError
+                    ? "border-destructive focus-visible:ring-destructive"
+                    : ""
                 }
               />
               {emailError && (
@@ -95,11 +98,10 @@ export default function LoginForm() {
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   placeholder="example123"
-                  className={`pr-10 ${
-                    passwordError
-                      ? "border-destructive focus-visible:ring-destructive"
-                      : ""
-                  }`}
+                  className={`pr-10 ${passwordError
+                    ? "border-destructive focus-visible:ring-destructive"
+                    : ""
+                    }`}
                 />
 
                 <button
@@ -121,9 +123,10 @@ export default function LoginForm() {
               )}
             </div>
 
-            {/* AUTH ERROR */}
             {authError && (
-              <p className="text-destructive text-sm text-center">{authError}</p>
+              <p className="text-destructive text-sm text-center">
+                {authError}
+              </p>
             )}
 
             <Button

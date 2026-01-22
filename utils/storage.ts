@@ -1,16 +1,20 @@
-const isBrowser = typeof window !== "undefined";
-
-export const getToken = (): string | null => {
-  if (!isBrowser) return null;
-  return localStorage.getItem("token");
+"use client";
+export const setToken = (token: string) => {
+  if (typeof window !== "undefined") {
+    localStorage.setItem("authorization", token);
+  }
 };
 
-export const setToken = (token: string): void => {
-  if (!isBrowser) return;
-  localStorage.setItem("token", token);
+export const getToken = () => {
+  if (typeof window !== "undefined") {
+    return localStorage.getItem("authorization");
+  }
+  return null;
 };
 
-export const clearSession = (): void => {
-  if (!isBrowser) return;
-  localStorage.clear();
+export const setApiToken = (token: string) => localStorage.setItem("apiToken", token);
+export const getApiToken = () => localStorage.getItem("apiToken");
+export const clearSession = () => {
+  localStorage.removeItem("authorization");
+  localStorage.removeItem("apiToken");
 };
