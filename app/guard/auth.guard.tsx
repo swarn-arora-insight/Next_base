@@ -39,7 +39,7 @@ export default function AuthGuard({ children }: { children: React.ReactNode }) {
     };
   }, [router]);
 
-  if (loading) return null; // Optionally add a spinner here
+  if (loading) return null;
 
   // Only render children if token exists
   return token ? <>{children}</> : null;

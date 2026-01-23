@@ -5,7 +5,6 @@ import { toast } from "sonner";
 import { getToken, setToken, setApiToken, clearSession } from "@/utils/storage";
 
 export const applyInterceptors = (axiosInstance: AxiosInstance) => {
-  console.log("🔥 Interceptors attached");
 
   /* ================= REQUEST ================= */
   axiosInstance.interceptors.request.use(
@@ -22,8 +21,6 @@ export const applyInterceptors = (axiosInstance: AxiosInstance) => {
   /* ================= RESPONSE ================= */
   axiosInstance.interceptors.response.use(
     (response) => {
-      console.log("✅ RESPONSE INTERCEPTOR HIT");
-
       // save tokens FIRST
       const token = response.headers?.["authorization"];
       if (token) setToken(token);
@@ -31,7 +28,7 @@ export const applyInterceptors = (axiosInstance: AxiosInstance) => {
       const apiToken = response?.data?.response?.apiToken;
       if (apiToken) setApiToken(apiToken);
 
-      return response; // ⬅️ NEVER reject here
+      return response;
     },
     (error) => {
       const status = error?.response?.status;

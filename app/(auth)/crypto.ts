@@ -1,9 +1,7 @@
 "use client";
 import CryptoJS from "crypto-js";
 
-// Read key from env
 const ENCRYPTION_KEY = process.env.NEXT_PUBLIC_ENCRYPTION_KEY;
-
 if (!ENCRYPTION_KEY) {
     throw new Error("ENCRYPTION_KEY is not defined in the environment");
 }
