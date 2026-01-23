@@ -10,6 +10,7 @@ import { AddRoleDialog } from "./component/add-role-dialog";
 import { AddUserDialog } from "./component/add-user-dialog";
 import Organization from "./component/organization";
 import Roles from "./component/roles";
+import UserList from "./component/user-list";
 
 interface TabItem {
   tab_name: string;
@@ -129,10 +130,8 @@ export default function UserManagement() {
         </TabsContent>
 
         <TabsContent value="users" className="mt-6">
-          <div className="rounded-lg border border-border bg-card p-6 shadow-sm">
-            <p className="text-muted-foreground">
-              Users content will be displayed here.
-            </p>
+          <div className="rounded-lg border border-border bg-card p-3 shadow-sm">
+            <UserList />
           </div>
         </TabsContent>
       </Tabs>

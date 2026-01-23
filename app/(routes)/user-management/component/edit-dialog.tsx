@@ -84,9 +84,6 @@ interface EditRoleDialogProps {
     onOpenChange: (open: boolean) => void;
     roleName: string;
     onRoleNameChange: (name: string) => void;
-    selectedOrganizationId: string;
-    onOrganizationChange: (orgId: string) => void;
-    organizations: Organization[];
     onSave: () => void;
 }
 
@@ -95,9 +92,6 @@ export function EditRoleDialog({
     onOpenChange,
     roleName,
     onRoleNameChange,
-    selectedOrganizationId,
-    onOrganizationChange,
-    organizations,
     onSave,
 }: EditRoleDialogProps) {
     return (
@@ -125,9 +119,103 @@ export function EditRoleDialog({
                             className="bg-background border-border"
                         />
                     </div>
+                </div>
+                <DialogFooter className="gap-2">
+                    <Button variant="outline" onClick={() => onOpenChange(false)}>
+                        Cancel
+                    </Button>
+                    <Button className="text-text" onClick={onSave} disabled={!roleName.trim()}>
+                        Save Changes
+                    </Button>
+                </DialogFooter>
+            </DialogContent>
+        </Dialog>
+    );
+}
+
+interface Role {
+    id: number;
+    name: string;
+}
+
+interface EditUserOrganization {
+    id: number;
+    name: string;
+}
+
+interface EditUserDialogProps {
+    open: boolean;
+    onOpenChange: (open: boolean) => void;
+    firstName: string;
+    onFirstNameChange: (name: string) => void;
+    lastName: string;
+    onLastNameChange: (name: string) => void;
+    selectedRoleId: string;
+    onRoleChange: (roleId: string) => void;
+    roles: Role[];
+    selectedOrganizationId: string;
+    onOrganizationChange: (orgId: string) => void;
+    organizations: EditUserOrganization[];
+    onSave: () => void;
+}
+
+const RequiredStar = () => <span className="text-destructive ml-0.5">*</span>;
+
+export function EditUserDialog({
+    open,
+    onOpenChange,
+    firstName,
+    onFirstNameChange,
+    lastName,
+    onLastNameChange,
+    selectedRoleId,
+    onRoleChange,
+    roles,
+    selectedOrganizationId,
+    onOrganizationChange,
+    organizations,
+    onSave,
+}: EditUserDialogProps) {
+    return (
+        <Dialog open={open} onOpenChange={onOpenChange}>
+            <DialogContent className="sm:max-w-md">
+                <DialogHeader>
+                    <DialogTitle className="flex items-center gap-2 text-foreground">
+                        <Pencil className="size-5 text-primary" />
+                        Edit User
+                    </DialogTitle>
+                    <DialogDescription className="text-muted-foreground">
+                        Update the user details below.
+                    </DialogDescription>
+                </DialogHeader>
+                <div className="space-y-4 py-4">
                     <div className="space-y-2">
-                        <Label htmlFor="edit-role-org" className="text-foreground">
-                            Organization
+                        <Label htmlFor="edit-user-firstname" className="text-foreground">
+                            First Name<RequiredStar />
+                        </Label>
+                        <Input
+                            id="edit-user-firstname"
+                            value={firstName}
+                            onChange={(e) => onFirstNameChange(e.target.value)}
+                            placeholder="Enter first name"
+                            className="bg-background border-border"
+                        />
+                    </div>
+                    <div className="space-y-2">
+                        <Label htmlFor="edit-user-lastname" className="text-foreground">
+                            Last Name<RequiredStar />
+                        </Label>
+                        <Input
+                            id="edit-user-lastname"
+                            value={lastName}
+                            onChange={(e) => onLastNameChange(e.target.value)}
+                            placeholder="Enter last name"
+                            className="bg-background border-border"
+                        />
+                    </div>
+                    <div className="space-y-2">
+                        <Label htmlFor="edit-user-organization" className="text-foreground">
+                            Organization<RequiredStar />
                         </Label>
                         <Select value={selectedOrganizationId} onValueChange={onOrganizationChange}>
                             <SelectTrigger className="bg-background border-border">
@@ -142,12 +230,29 @@ export function EditRoleDialog({
                             </SelectContent>
                         </Select>
                     </div>
+                    <div className="space-y-2">
+                        <Label htmlFor="edit-user-role" className="text-foreground">
+                            Role<RequiredStar />
+                        </Label>
+                        <Select value={selectedRoleId} onValueChange={onRoleChange}>
+                            <SelectTrigger className="bg-background border-border">
+                                <SelectValue placeholder="Select role" />
+                            </SelectTrigger>
+                            <SelectContent>
+                                {roles.map((role) => (
+                                    <SelectItem key={role.id} value={role.id.toString()}>
+                                        {role.name}
+                                    </SelectItem>
+                                ))}
+                            </SelectContent>
+                        </Select>
+                    </div>
                 </div>
                 <DialogFooter className="gap-2">
                     <Button variant="outline" onClick={() => onOpenChange(false)}>
                         Cancel
                     </Button>
-                    <Button className="text-text" onClick={onSave} disabled={!roleName.trim() || !selectedOrganizationId}>
+                    <Button className="text-text" onClick={onSave} disabled={!firstName.trim() || !lastName.trim() || !selectedRoleId || !selectedOrganizationId}>
                         Save Changes
                     </Button>
                 </DialogFooter>

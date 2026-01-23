@@ -14,13 +14,6 @@ import {
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import {
-    Select,
-    SelectContent,
-    SelectItem,
-    SelectTrigger,
-    SelectValue,
-} from "@/components/ui/select";
 import { Shield } from "lucide-react";
 
 interface AddRoleDialogProps {
@@ -38,19 +31,15 @@ const dummyOrganizations = [
 
 export function AddRoleDialog({ open, onOpenChange }: AddRoleDialogProps) {
     const [roleName, setRoleName] = useState("");
-    const [selectedOrg, setSelectedOrg] = useState("");
 
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
-        console.log("Role created:", { roleName, organization: selectedOrg });
         setRoleName("");
-        setSelectedOrg("");
         onOpenChange(false);
     };
 
     const handleClose = () => {
         setRoleName("");
-        setSelectedOrg("");
         onOpenChange(false);
     };
 
@@ -84,23 +73,6 @@ export function AddRoleDialog({ open, onOpenChange }: AddRoleDialogProps) {
                                 className="bg-background text-foreground"
                                 required
                             />
-                        </div>
-                        <div className="space-y-2">
-                            <Label htmlFor="organization" className="text-foreground">
-                                Organization
-                            </Label>
-                            <Select value={selectedOrg} onValueChange={setSelectedOrg} required>
-                                <SelectTrigger className="w-full bg-background text-foreground">
-                                    <SelectValue placeholder="Select organization" />
-                                </SelectTrigger>
-                                <SelectContent>
-                                    {dummyOrganizations.map((org) => (
-                                        <SelectItem key={org.id} value={org.id}>
-                                            {org.name}
-                                        </SelectItem>
-                                    ))}
-                                </SelectContent>
-                            </Select>
                         </div>
                     </div>
                     <DialogFooter className="mt-6">

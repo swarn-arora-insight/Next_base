@@ -209,6 +209,7 @@ export default function RolesList() {
             header: "Actions",
             cell: ({ row }) => (
                 <div className="flex items-center gap-2">
+
                     <Button
                         variant="ghost"
                         size="icon"
@@ -218,15 +219,17 @@ export default function RolesList() {
                         <Pencil className="size-4" />
                         <span className="sr-only">Edit</span>
                     </Button>
-                    <Button
-                        variant="ghost"
-                        size="icon"
-                        onClick={() => handleDelete(row.original)}
-                        className="size-8 text-destructive bg-destructive/10 hover:bg-destructive/20 hover:scale-110 transition-all duration-200"
-                    >
-                        <Trash2 className="size-4" />
-                        <span className="sr-only">Delete</span>
-                    </Button>
+                    {row.original.userNames?.length == 0 && (
+                        <Button
+                            variant="ghost"
+                            size="icon"
+                            onClick={() => handleDelete(row.original)}
+                            className="size-8 text-destructive bg-destructive/10 hover:bg-destructive/20 hover:scale-110 transition-all duration-200"
+                        >
+                            <Trash2 className="size-4" />
+                            <span className="sr-only">Delete</span>
+                        </Button>
+                    )}
                 </div>
             ),
         },
@@ -267,8 +270,8 @@ export default function RolesList() {
                         size="sm"
                         onClick={() => setView("table")}
                         className={`gap-2 ${view === "table"
-                                ? "bg-background text-foreground shadow-sm"
-                                : "text-muted-foreground hover:text-foreground"
+                            ? "bg-background text-foreground shadow-sm"
+                            : "text-muted-foreground hover:text-foreground"
                             }`}
                     >
                         <TableIcon className="size-4" />
@@ -279,8 +282,8 @@ export default function RolesList() {
                         size="sm"
                         onClick={() => setView("card")}
                         className={`gap-2 ${view === "card"
-                                ? "bg-background text-foreground shadow-sm"
-                                : "text-muted-foreground hover:text-foreground"
+                            ? "bg-background text-foreground shadow-sm"
+                            : "text-muted-foreground hover:text-foreground"
                             }`}
                     >
                         <LayoutGrid className="size-4" />
@@ -441,9 +444,6 @@ export default function RolesList() {
                 onOpenChange={setIsEditDialogOpen}
                 roleName={editRoleName}
                 onRoleNameChange={setEditRoleName}
-                selectedOrganizationId={editOrgId}
-                onOrganizationChange={setEditOrgId}
-                organizations={organizationsData}
                 onSave={handleEditSave}
             />
 
