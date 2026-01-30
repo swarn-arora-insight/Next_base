@@ -21,27 +21,76 @@ interface AddRoleDialogProps {
     onOpenChange: (open: boolean) => void;
 }
 
-// Dummy organizations list - will come from API in future
-const dummyOrganizations = [
-    { id: "1", name: "Acme Corporation" },
-    { id: "2", name: "Tech Solutions Inc." },
-    { id: "3", name: "Global Enterprises" },
-    { id: "4", name: "Innovation Labs" },
-];
+interface FormErrors {
+    roleName?: string;
+}
+
+const RequiredStar = () => <span className="text-destructive ml-0.5">*</span>;
 
 export function AddRoleDialog({ open, onOpenChange }: AddRoleDialogProps) {
     const [roleName, setRoleName] = useState("");
+    const [errors, setErrors] = useState<FormErrors>({});
+    const [touched, setTouched] = useState(false);
+    const [fieldTouched, setFieldTouched] = useState<Record<string, boolean>>({});
+
+    const validateRoleName = (value: string): string | undefined => {
+        if (!value.trim()) return "Role name is required";
+        if (value.trim().length < 2) return "Role name must be at least 2 characters";
+        return undefined;
+    };
+
+    const validateField = (field: string, value: string) => {
+        const newErrors = { ...errors };
+
+        if (field === "roleName") {
+            const error = validateRoleName(value);
+            if (error) newErrors.roleName = error;
+            else delete newErrors.roleName;
+        }
+
+        setErrors(newErrors);
+    };
+
+    const handleFieldChange = (field: string, value: string, setter: (val: string) => void) => {
+        setter(value);
+        setFieldTouched(prev => ({ ...prev, [field]: true }));
+        validateField(field, value);
+    };
+
+    const validateForm = (): boolean => {
+        const newErrors: FormErrors = {};
+
+        const roleNameError = validateRoleName(roleName);
+        if (roleNameError) newErrors.roleName = roleNameError;
+
+        setErrors(newErrors);
+        return Object.keys(newErrors).length === 0;
+    };
 
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
-        setRoleName("");
+        setTouched(true);
+
+        if (!validateForm()) return;
+
+        console.log("Role created:", { roleName });
+        resetForm();
         onOpenChange(false);
     };
 
-    const handleClose = () => {
+    const resetForm = () => {
         setRoleName("");
+        setErrors({});
+        setTouched(false);
+        setFieldTouched({});
+    };
+
+    const handleClose = () => {
+        resetForm();
         onOpenChange(false);
     };
+
+    const showError = (field: string) => (touched || fieldTouched[field]) && errors[field as keyof FormErrors];
 
     return (
         <Dialog open={open} onOpenChange={onOpenChange}>
@@ -54,7 +103,7 @@ export function AddRoleDialog({ open, onOpenChange }: AddRoleDialogProps) {
                         <div>
                             <DialogTitle className="text-foreground">Add Role</DialogTitle>
                             <DialogDescription className="text-muted-foreground">
-                                Create a new role and assign it to an organization.
+                                Create a new role for your organization.
                             </DialogDescription>
                         </div>
                     </div>
@@ -63,16 +112,18 @@ export function AddRoleDialog({ open, onOpenChange }: AddRoleDialogProps) {
                     <div className="space-y-4">
                         <div className="space-y-2">
                             <Label htmlFor="role-name" className="text-foreground">
-                                Role Name
+                                Role Name<RequiredStar />
                             </Label>
                             <Input
                                 id="role-name"
                                 placeholder="Enter role name"
                                 value={roleName}
-                                onChange={(e) => setRoleName(e.target.value)}
-                                className="bg-background text-foreground"
-                                required
+                                onChange={(e) => handleFieldChange("roleName", e.target.value, setRoleName)}
+                                className={`bg-background text-foreground ${showError("roleName") ? "border-destructive" : ""}`}
                             />
+                            {showError("roleName") && (
+                                <p className="text-xs text-destructive">{errors.roleName}</p>
+                            )}
                         </div>
                     </div>
                     <DialogFooter className="mt-6">

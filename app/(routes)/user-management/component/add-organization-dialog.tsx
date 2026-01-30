@@ -21,23 +21,56 @@ interface AddOrganizationDialogProps {
     onOpenChange: (open: boolean) => void;
 }
 
+const RequiredStar = () => <span className="text-destructive ml-0.5">*</span>;
+
 export function AddOrganizationDialog({
     open,
     onOpenChange,
 }: AddOrganizationDialogProps) {
     const [orgName, setOrgName] = useState("");
+    const [error, setError] = useState("");
+    const [touched, setTouched] = useState(false);
+    const [fieldTouched, setFieldTouched] = useState(false);
+
+    const validateOrgName = (value: string): string => {
+        if (!value.trim()) return "Organization name is required";
+        if (value.trim().length < 2) return "Organization name must be at least 2 characters";
+        return "";
+    };
+
+    const handleFieldChange = (value: string) => {
+        setOrgName(value);
+        setFieldTouched(true);
+        setError(validateOrgName(value));
+    };
 
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
+        setTouched(true);
+
+        const validationError = validateOrgName(orgName);
+        setError(validationError);
+
+        if (validationError) return;
+
         console.log("Organization created:", { orgName });
-        setOrgName("");
+        resetForm();
         onOpenChange(false);
     };
 
-    const handleClose = () => {
+    const resetForm = () => {
         setOrgName("");
+        setError("");
+        setTouched(false);
+        setFieldTouched(false);
+    };
+
+    const handleClose = () => {
+        resetForm();
         onOpenChange(false);
     };
+
+    const showError = (touched || fieldTouched) && error;
 
     return (
         <Dialog open={open} onOpenChange={onOpenChange}>
@@ -59,16 +92,18 @@ export function AddOrganizationDialog({
                     <div className="space-y-4">
                         <div className="space-y-2">
                             <Label htmlFor="org-name" className="text-foreground">
-                                Organization Name
+                                Organization Name<RequiredStar />
                             </Label>
                             <Input
                                 id="org-name"
                                 placeholder="Enter organization name"
                                 value={orgName}
-                                onChange={(e) => setOrgName(e.target.value)}
-                                className="bg-background text-foreground"
-                                required
+                                onChange={(e) => handleFieldChange(e.target.value)}
+                                className={`bg-background text-foreground ${showError ? "border-destructive" : ""}`}
                             />
+                            {showError && (
+                                <p className="text-xs text-destructive">{error}</p>
+                            )}
                         </div>
                     </div>
                     <DialogFooter className="mt-6">

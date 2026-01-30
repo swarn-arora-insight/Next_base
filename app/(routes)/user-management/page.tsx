@@ -21,9 +21,11 @@ interface TabItem {
 
 // This will come from an API in the future
 const tabsList: TabItem[] = [
-  { tab_name: "Organizations", access: 1, add_button: "Organization", icon: Building2 },
-  { tab_name: "Roles", access: 1, add_button: "Role", icon: Shield },
   { tab_name: "Users", access: 1, add_button: "User", icon: Users },
+  { tab_name: "Roles", access: 1, add_button: "Role", icon: Shield },
+  { tab_name: "Organizations", access: 1, add_button: "Organization", icon: Building2 },
+
+
 ];
 
 export default function UserManagement() {

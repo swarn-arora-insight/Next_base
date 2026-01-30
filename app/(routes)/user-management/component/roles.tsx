@@ -31,6 +31,8 @@ import {
 } from "lucide-react";
 import { DeleteConfirmationDialog } from "./delete-confirmation-dialog";
 import { EditRoleDialog } from "./edit-dialog";
+import { FeatureListDialog } from "./feature-list-dialog";
+import { Feature } from "@/interface/interface";
 
 type Organization = {
     id: number;
@@ -81,6 +83,10 @@ export default function RolesList() {
     const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
     const [deletingRole, setDeletingRole] = useState<Role | null>(null);
 
+    // Feature list dialog state
+    const [isFeatureListOpen, setIsFeatureListOpen] = useState(false);
+    const [selectedRoleForFeatures, setSelectedRoleForFeatures] = useState<Role | null>(null);
+
     // Handle edit
     const handleEdit = (role: Role) => {
         setEditingRole(role);
@@ -121,7 +127,27 @@ export default function RolesList() {
 
     // Handle feature list click
     const handleFeatureList = (role: Role) => {
-        console.log(`Feature list for role: ${role.name}`);
+        setSelectedRoleForFeatures(role);
+        setIsFeatureListOpen(true);
+    };
+
+    // Handle feature list save
+    const handleFeatureListSave = (features: Feature[]) => {
+        const mappedFeatures = features.map(f => ({
+            id: f.feature_id,
+            name: f.feature_name,
+            access: f.access,
+            group: f.group_id,
+        }));
+
+        console.log(
+            `Saved features for role ${selectedRoleForFeatures?.name}:`,
+            mappedFeatures
+        );
+
+        // save mappedFeatures to backend here
+        setIsFeatureListOpen(false);
+        setSelectedRoleForFeatures(null);
     };
 
     // Truncate user names
@@ -209,7 +235,6 @@ export default function RolesList() {
             header: "Actions",
             cell: ({ row }) => (
                 <div className="flex items-center gap-2">
-
                     <Button
                         variant="ghost"
                         size="icon"
@@ -219,17 +244,15 @@ export default function RolesList() {
                         <Pencil className="size-4" />
                         <span className="sr-only">Edit</span>
                     </Button>
-                    {row.original.userNames?.length == 0 && (
-                        <Button
-                            variant="ghost"
-                            size="icon"
-                            onClick={() => handleDelete(row.original)}
-                            className="size-8 text-destructive bg-destructive/10 hover:bg-destructive/20 hover:scale-110 transition-all duration-200"
-                        >
-                            <Trash2 className="size-4" />
-                            <span className="sr-only">Delete</span>
-                        </Button>
-                    )}
+                    <Button
+                        variant="ghost"
+                        size="icon"
+                        onClick={() => handleDelete(row.original)}
+                        className="size-8 text-destructive bg-destructive/10 hover:bg-destructive/20 hover:scale-110 transition-all duration-200"
+                    >
+                        <Trash2 className="size-4" />
+                        <span className="sr-only">Delete</span>
+                    </Button>
                 </div>
             ),
         },
@@ -454,6 +477,14 @@ export default function RolesList() {
                 title="Role"
                 itemName={deletingRole?.name ?? ""}
                 onConfirm={handleDeleteConfirm}
+            />
+
+            {/* Feature List Dialog */}
+            <FeatureListDialog
+                open={isFeatureListOpen}
+                onOpenChange={setIsFeatureListOpen}
+                roleName={selectedRoleForFeatures?.name ?? ""}
+                onSave={handleFeatureListSave}
             />
         </div>
     );
