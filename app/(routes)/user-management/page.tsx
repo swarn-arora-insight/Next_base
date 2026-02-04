@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
 import { Plus, Building2, Shield, Users } from "lucide-react";
@@ -8,38 +8,43 @@ import type { LucideIcon } from "lucide-react";
 import { AddOrganizationDialog } from "./component/add-organization-dialog";
 import { AddRoleDialog } from "./component/add-role-dialog";
 import { AddUserDialog } from "./component/add-user-dialog";
-import Organization from "./component/organization";
+// import Organization from "./component/organization";
 import Roles from "./component/roles";
 import UserList from "./component/user-list";
+import Organization from "./component/Organization";
+import { roleList, useTabsList } from "./component/api";
 
 interface TabItem {
   tab_name: string;
   access: number;
   add_button: string;
-  icon: LucideIcon;
+  icon: IconKey;
 }
 
-// This will come from an API in the future
-const tabsList: TabItem[] = [
-  { tab_name: "Users", access: 1, add_button: "User", icon: Users },
-  { tab_name: "Roles", access: 1, add_button: "Role", icon: Shield },
-  { tab_name: "Organizations", access: 1, add_button: "Organization", icon: Building2 },
-
-
-];
+const iconMap: Record<string, LucideIcon> = {
+  Building2,
+  Shield,
+  Users,
+};
+type IconKey = "Building2" | "Shield" | "Users";
 
 export default function UserManagement() {
-  const [activeTab, setActiveTab] = useState<string>(
-    tabsList.length > 0 ? tabsList[0].tab_name.toLowerCase() : ""
-  );
 
+const { data: tabsList = [], isLoading } = useTabsList();
   // Dialog states for each tab
   const [isOrgDialogOpen, setIsOrgDialogOpen] = useState(false);
   const [isRoleDialogOpen, setIsRoleDialogOpen] = useState(false);
   const [isUserDialogOpen, setIsUserDialogOpen] = useState(false);
 
   // Filter tabs that user has access to
-  const accessibleTabs = tabsList.filter((tab) => tab.access === 1);
+ const accessibleTabs = useMemo(
+    () => tabsList.filter((tab: TabItem) => tab.access === 1),
+    [tabsList],
+  );
+
+  const [activeTab, setActiveTab] = useState<string>(
+    accessibleTabs[0]?.tab_name?.toLowerCase() || "",
+  );
 
   // Get dynamic button text based on tab name
   const getAddButtonText = (tabName: string): string => {
@@ -68,6 +73,10 @@ export default function UserManagement() {
       </div>
     );
   }
+  
+  if (isLoading) {
+    return <div className="p-6">Loading tabs...</div>;
+  }
 
   return (
     <div className="p-6">
@@ -85,8 +94,8 @@ export default function UserManagement() {
       >
         <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
           <TabsList className="bg-muted/60 p-1 h-auto">
-            {accessibleTabs.map((tab) => {
-              const IconComponent = tab.icon;
+            {accessibleTabs.map((tab: TabItem) => {
+             const IconComponent = iconMap[tab.icon];
               return (
                 <TabsTrigger
                   key={tab.tab_name}
@@ -101,7 +110,7 @@ export default function UserManagement() {
           </TabsList>
 
           {/* Dynamic Add Button based on active tab */}
-          {accessibleTabs.map((tab) => (
+          {accessibleTabs.map((tab: TabItem) => (
             <div
               key={`btn-${tab.tab_name}`}
               className={activeTab === tab.tab_name.toLowerCase() ? "block" : "hidden"}

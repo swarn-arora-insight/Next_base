@@ -1,6 +1,7 @@
 "use client";
 import axios from "axios";
 import { applyInterceptors } from "./interceptors";
+import { getApiToken } from "@/utils/storage";
 
 const apiClient = axios.create({
   baseURL: process.env.NEXT_PUBLIC_API_BASE_URL,
@@ -20,7 +21,10 @@ export const apiRequest = async (
     const response = await apiClient.request({
       method,
       url,
-      data,
+       data: {
+      ...data,
+      token: getApiToken(),   
+    },
       responseType,
     });
 

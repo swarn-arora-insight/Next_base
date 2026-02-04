@@ -19,6 +19,7 @@ import {
     SelectValue,
 } from "@/components/ui/select";
 import { Pencil } from "lucide-react";
+import { useEditOrg } from "./api";
 
 interface EditOrganizationDialogProps {
     open: boolean;
@@ -26,6 +27,7 @@ interface EditOrganizationDialogProps {
     name: string;
     onNameChange: (name: string) => void;
     onSave: () => void;
+    orgId: string;
 }
 
 export function EditOrganizationDialog({
@@ -34,7 +36,27 @@ export function EditOrganizationDialog({
     name,
     onNameChange,
     onSave,
+    orgId
 }: EditOrganizationDialogProps) {
+
+    const { mutate: editOrg, isPending } = useEditOrg();
+
+    const handleSave = () => {
+    if (!name.trim()) return;
+
+    editOrg(
+      {
+        org_id: orgId,
+        org_name: name,
+      },
+      {
+        onSuccess: () => {
+          onOpenChange(false); // close dialog after success
+        },
+      }
+    );
+  };
+    
     return (
         <Dialog open={open} onOpenChange={onOpenChange}>
             <DialogContent className="sm:max-w-md">
@@ -65,9 +87,16 @@ export function EditOrganizationDialog({
                     <Button variant="outline" onClick={() => onOpenChange(false)}>
                         Cancel
                     </Button>
-                    <Button className="text-text" onClick={onSave} disabled={!name.trim()}>
+                    {/* <Button className="text-text" onClick={onSave} disabled={!name.trim()}>
                         Save Changes
-                    </Button>
+                    </Button> */}
+                    <Button
+            onClick={handleSave}
+            disabled={!name.trim() || isPending}
+          >
+            {isPending ? "Saving..." : "Save Changes"}
+          </Button>
+
                 </DialogFooter>
             </DialogContent>
         </Dialog>

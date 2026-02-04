@@ -10,7 +10,7 @@ import { Eye, EyeOff, LogIn, Loader2 } from "lucide-react";
 import { loginApi } from "../api";
 import { toast } from "sonner";
 import { useDispatch } from "react-redux";
-import { setUser } from "@/redux/authSlice";
+import { setApiToken, setUser } from "@/redux/authSlice";
 
 export default function LoginForm() {
   const router = useRouter();
@@ -47,13 +47,16 @@ export default function LoginForm() {
       setIsLoading(true);
 
       const res = await loginApi({ email, password });
-
       dispatch(
         setUser({
           firstname: res.firstName,
           lastname: res.lastName,
-        })
+        }),
       );
+
+      if (res.token) {
+        dispatch(setApiToken(res.token));
+      }
 
       toast.success("Login successful");
 
@@ -63,7 +66,6 @@ export default function LoginForm() {
     } finally {
       setIsLoading(false);
     }
-
   };
 
   return (
@@ -120,17 +122,25 @@ export default function LoginForm() {
                   onClick={() => setShowPassword(!showPassword)}
                   className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500"
                 >
-                  {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                  {showPassword ? (
+                    <EyeOff className="h-4 w-4" />
+                  ) : (
+                    <Eye className="h-4 w-4" />
+                  )}
                 </button>
               </div>
 
               {passwordError && (
-                <span className="text-destructive text-xs">{passwordError}</span>
+                <span className="text-destructive text-xs">
+                  {passwordError}
+                </span>
               )}
             </div>
 
             {authError && (
-              <p className="text-destructive text-sm text-center">{authError}</p>
+              <p className="text-destructive text-sm text-center">
+                {authError}
+              </p>
             )}
 
             {/* Submit */}

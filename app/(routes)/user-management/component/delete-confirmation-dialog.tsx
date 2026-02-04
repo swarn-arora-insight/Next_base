@@ -44,7 +44,7 @@ export function DeleteConfirmationDialog({
                         <p className="mt-1 font-semibold text-foreground">{itemName}</p>
                     </div>
                 </div>
-                <DialogFooter className="gap-2 sm:gap-0">
+                <DialogFooter className="gap-2">
                     <Button variant="outline" onClick={() => onOpenChange(false)}>
                         Cancel
                     </Button>
