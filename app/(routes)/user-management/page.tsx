@@ -12,7 +12,7 @@ import { AddUserDialog } from "./component/add-user-dialog";
 import Roles from "./component/roles";
 import UserList from "./component/user-list";
 import Organization from "./component/Organization";
-import { roleList, useTabsList } from "./component/api";
+import { useTabsList } from "./component/api";
 
 interface TabItem {
   tab_name: string;
@@ -29,22 +29,27 @@ const iconMap: Record<string, LucideIcon> = {
 type IconKey = "Building2" | "Shield" | "Users";
 
 export default function UserManagement() {
-
-const { data: tabsList = [], isLoading } = useTabsList();
+  const { data: tabsList = [], isLoading } = useTabsList();
   // Dialog states for each tab
   const [isOrgDialogOpen, setIsOrgDialogOpen] = useState(false);
   const [isRoleDialogOpen, setIsRoleDialogOpen] = useState(false);
   const [isUserDialogOpen, setIsUserDialogOpen] = useState(false);
 
   // Filter tabs that user has access to
- const accessibleTabs = useMemo(
-    () => tabsList.filter((tab: TabItem) => tab.access === 1),
-    [tabsList],
-  );
+ const accessibleTabs = useMemo(() => {
+  return tabsList?.filter((tab: TabItem) => tab.access === 1) ?? [];
+}, [tabsList?.length]);
 
-  const [activeTab, setActiveTab] = useState<string>(
-    accessibleTabs[0]?.tab_name?.toLowerCase() || "",
-  );
+
+  const [activeTab, setActiveTab] = useState<string>("");
+
+  useEffect(() => {
+  if (accessibleTabs.length > 0 && !activeTab) {
+    setActiveTab(accessibleTabs[0].tab_name.toLowerCase());
+  }
+}, [accessibleTabs.length]);
+
+
 
   // Get dynamic button text based on tab name
   const getAddButtonText = (tabName: string): string => {
@@ -53,29 +58,27 @@ const { data: tabsList = [], isLoading } = useTabsList();
 
   // Handle add button click - opens the appropriate dialog
   const handleAddClick = (tabName: string) => {
-    switch (tabName.toLowerCase()) {
-      case "organization":
-        setIsOrgDialogOpen(true);
-        break;
-      case "role":
-        setIsRoleDialogOpen(true);
-        break;
-      case "user":
-        setIsUserDialogOpen(true);
-        break;
+    const name = tabName.toLowerCase().trim();
+
+    if (name.includes("org")) {
+      setIsOrgDialogOpen(true);
+    } else if (name.includes("role")) {
+      setIsRoleDialogOpen(true);
+    } else if (name.includes("user")) {
+      setIsUserDialogOpen(true);
     }
   };
 
-  if (accessibleTabs.length === 0) {
+  if (isLoading) {
+    return <div className="p-6">Loading tabs...</div>;
+  }
+
+  if (!tabsList.length) {
     return (
       <div className="p-6">
         <p className="text-muted-foreground">No tabs available.</p>
       </div>
     );
-  }
-  
-  if (isLoading) {
-    return <div className="p-6">Loading tabs...</div>;
   }
 
   return (
@@ -87,15 +90,11 @@ const { data: tabsList = [], isLoading } = useTabsList();
         </p>
       </div>
 
-      <Tabs
-        value={activeTab}
-        onValueChange={setActiveTab}
-        className="w-full"
-      >
+      <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
         <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
           <TabsList className="bg-muted/60 p-1 h-auto">
             {accessibleTabs.map((tab: TabItem) => {
-             const IconComponent = iconMap[tab.icon];
+              const IconComponent = iconMap[tab.icon];
               return (
                 <TabsTrigger
                   key={tab.tab_name}
@@ -110,41 +109,29 @@ const { data: tabsList = [], isLoading } = useTabsList();
           </TabsList>
 
           {/* Dynamic Add Button based on active tab */}
-          {accessibleTabs.map((tab: TabItem) => (
-            <div
-              key={`btn-${tab.tab_name}`}
-              className={activeTab === tab.tab_name.toLowerCase() ? "block" : "hidden"}
-            >
-              <Button
-                onClick={() => handleAddClick(tab.add_button)}
-                className="gap-2 shadow-sm hover:shadow-md transition-shadow text-text"
-              >
-                <Plus className="size-4" />
-                {getAddButtonText(tab.add_button)}
-              </Button>
-            </div>
-          ))}
+          <Button
+            onClick={() => handleAddClick(activeTab)}
+            className="gap-2 shadow-sm hover:shadow-md transition-shadow text-text"
+          >
+            <Plus className="size-4" />
+            Add {activeTab}
+          </Button>
         </div>
 
         {/* Tab Content Areas */}
-        <TabsContent value="organizations" className="mt-2">
-          <div className="rounded-lg border border-border bg-card p-3 shadow-sm">
-            <Organization />
-          </div>
+        {accessibleTabs.map((tab: TabItem) => {
+          const value = tab.tab_name.toLowerCase();
 
-        </TabsContent>
-
-        <TabsContent value="roles" className="mt-2">
-          <div className="rounded-lg border border-border bg-card p-3 shadow-sm">
-            <Roles />
-          </div>
-        </TabsContent>
-
-        <TabsContent value="users" className="mt-6">
-          <div className="rounded-lg border border-border bg-card p-3 shadow-sm">
-            <UserList />
-          </div>
-        </TabsContent>
+          return (
+            <TabsContent key={tab.tab_name} value={value} className="mt-2">
+              <div className="rounded-lg border border-border bg-card p-3 shadow-sm">
+                {value.includes("org") && <Organization />}
+                {value.includes("role") && <Roles />}
+                {value.includes("user") && <UserList />}
+              </div>
+            </TabsContent>
+          );
+        })}
       </Tabs>
 
       {/* Dialogs */}

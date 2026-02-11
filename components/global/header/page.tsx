@@ -9,7 +9,7 @@ import Logo from "@/components/logo";
 import { ModeToggle } from "@/components/toggleMode";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
-import { LogOut, User, Users } from "lucide-react";
+import { Home, LogOut, User, Users } from "lucide-react";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -59,6 +59,15 @@ export default function Header() {
             className="bg-primary hover:bg-primary/80 cursor-pointer text-text"
           >
             <Users className="h-4 w-4" />
+          </Button>
+          <Button
+            variant="default"
+            size="sm"
+            title="Dashboard"
+            onClick={() => router.push("/dashboard")}
+            className="bg-primary hover:bg-primary/80 cursor-pointer text-text"
+          >
+            <Home className="h-4 w-4" />
           </Button>
 
           <ModeToggle />

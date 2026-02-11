@@ -38,9 +38,8 @@ export interface UserApiResponse {
 }
 
 export interface RoleApiResponse {
-  id: number;
-  name: string;
-  organization_id: number;
+  role_id: string;
+  role_name: string;
   user_count: number;
   user_names: string[];
 }
@@ -48,6 +47,22 @@ export interface RoleApiResponse {
 interface DeleteUserPayload {
   user_id: string;
 }
+interface EditRolePayload {
+  role_id: string;
+  role_name: string;
+}
+
+export interface ApiFeature {
+  feature_id: string;
+  feature_name: string;
+}
+
+export interface ApiFeatureGroup {
+  feature_grp_id: string;
+  feature_grp_name: string;
+  feature_list: ApiFeature[];
+}
+
 
 export const useTabsList = () => {
   return useQuery({
@@ -55,13 +70,6 @@ export const useTabsList = () => {
     queryFn: async () => {
       const response = await apiRequest("post", "/uam/tabslist", {});
       const resData = response.data;
-
-      if (resData?.header?.code !== 200) {
-        throw new Error(
-          resData?.header?.message || "Failed to fetch tabs list",
-        );
-      }
-
       return resData.response;
     },
     refetchOnWindowFocus: false,
@@ -75,11 +83,6 @@ export const useOrgList  = () => {
     queryFn: async () => {
       const response = await apiRequest("post", "/uam/getorgs", {});
       const resData = response.data;
-
-      if (resData?.header?.code !== 200) {
-        throw new Error(resData?.header?.message || "Failed to fetch org list");
-      }
-
       return resData.response;
     },
     refetchOnWindowFocus: false,
@@ -92,16 +95,7 @@ export const useCreateOrg = () => {
   return useMutation({
     mutationFn: async (payload: CreateOrgPayload) => {
       const response = await apiRequest("post", "/uam/createorg", payload);
-
       const resData = response.data;
-
-      if (resData?.header?.code !== 200) {
-        throw new Error(
-          resData?.header?.message 
-          || "Failed to create organization",
-        );
-      }
-
       return resData.response;
     },
     onSuccess: () => {
@@ -115,15 +109,7 @@ export const useEditOrg = () => {
   return useMutation({
     mutationFn: async (payload: EditOrgPayload) => {
       const response = await apiRequest("post", "/uam/editorg", payload);
-
       const resData = response.data;
-
-      if (resData?.header?.code !== 200) {
-        throw new Error(
-          resData?.header?.message || "Failed to edit organization",
-        );
-      }
-
       return resData.response;
     },
     onSuccess: () => {
@@ -137,15 +123,7 @@ export const useDeleteOrg = () => {
   return useMutation({
     mutationFn: async (payload: DeleteOrgPayload) => {
       const response = await apiRequest("post", "/uam/deleteorg", payload);
-
       const resData = response.data;
-
-      if (resData?.header?.code !== 200) {
-        throw new Error(
-          resData?.header?.message || "Failed to delete organization",
-        );
-      }
-
       return resData.response;
     },
       onSuccess: () => {
@@ -160,11 +138,6 @@ export const roleList = () => {
     queryFn: async () => {
       const response = await apiRequest("post", "/uam/getroles", {});
       const resData = response.data;
-
-      if (resData?.header?.code !== 200) {
-        throw new Error(resData?.header?.message || "Failed to fetch roles");
-      }
-
       return resData.response;
     },
     refetchOnWindowFocus: false,
@@ -172,19 +145,30 @@ export const roleList = () => {
   });
 };
 
-
 export const useCreateRole = () => {
+  const queryClient = useQueryClient();
   return useMutation({
     mutationFn: async (payload: CreateRolePayload) => {
       const response = await apiRequest("post", "/uam/createrole", payload);
-
-      const resData = response.data;
-
-      if (resData?.header?.code !== 200) {
-        throw new Error(resData?.header?.message || "Failed to create role");
-      }
-
+       const resData = response.data;
       return resData.response;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["roleList"] });
+    },
+  });
+};
+
+export const useEditRole = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async (payload: EditRolePayload) => {
+      const response = await apiRequest("post", "/uam/editrole", payload);
+       const resData = response.data;
+      return resData.response;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["roleList"] });
     },
   });
 };
@@ -195,17 +179,13 @@ export const usersList = () => {
     queryFn: async () => {
       const response = await apiRequest("post", "/users/getusers", {});
       const resData = response.data;
-
-      if (resData?.header?.code !== 200) {
-        throw new Error(resData?.header?.message || "Failed to fetch users");
-      }
-
       return resData.response as UserApiResponse[];
     },
     refetchOnWindowFocus: false,
     retry: 1,
   });
 };
+
 export const useCreateUser = () => {
   return useMutation({
     mutationFn: async (payload: CreateUserPayload) => {
@@ -214,13 +194,7 @@ export const useCreateUser = () => {
         "/v1/users/createuser",
         payload,
       );
-
       const resData = response.data;
-
-      if (resData?.header?.code !== 200) {
-        throw new Error(resData?.header?.message || "Failed to create user");
-      }
-
       return resData.response;
     },
   });
@@ -231,13 +205,7 @@ export const useDeleteUser = () => {
   return useMutation({
     mutationFn: async (payload: DeleteUserPayload) => {
       const response = await apiRequest("post", "/users/deleteuser", payload);
-
       const resData = response.data;
-
-      if (resData?.header?.code !== 200) {
-        throw new Error(resData?.header?.message || "Failed to delete user");
-      }
-
       return resData.response;
     },
 
@@ -246,3 +214,20 @@ export const useDeleteUser = () => {
     },
   });
 };
+
+export const useFeatureList = () => {
+  return useQuery<ApiFeatureGroup[]>({
+    queryKey: ["featureList"],
+    queryFn: async () => {
+      const response = await apiRequest("post", "/uam/getfeatures", {});
+      return response.data.response;
+    },
+    staleTime: 1000 * 60 * 5,
+    refetchOnWindowFocus: false,
+    refetchOnMount: false,
+    retry: 1,
+  });
+};
+
+
+
