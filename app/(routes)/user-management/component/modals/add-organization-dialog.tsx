@@ -15,7 +15,8 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Building2 } from "lucide-react";
-import { useCreateOrg } from "./api";
+import { useCreateOrg } from "../api";
+import { toast } from "sonner";
 
 interface AddOrganizationDialogProps {
   open: boolean;
@@ -61,6 +62,7 @@ export function AddOrganizationDialog({
       },
       {
         onSuccess: () => {
+          toast.success("Organization created successfully");
           resetForm();
           onOpenChange(false);
         },
@@ -73,11 +75,6 @@ export function AddOrganizationDialog({
     setError("");
     setTouched(false);
     setFieldTouched(false);
-  };
-
-  const handleClose = () => {
-    resetForm();
-    onOpenChange(false);
   };
 
   const showError = (touched || fieldTouched) && error;
@@ -118,14 +115,6 @@ export function AddOrganizationDialog({
             </div>
           </div>
           <DialogFooter className="mt-6">
-            <Button
-              type="button"
-              variant="outline"
-              onClick={handleClose}
-              className="bg-transparent text-foreground border-border hover:bg-muted"
-            >
-              Cancel
-            </Button>
             <Button type="submit" className="text-text">
               Create Organization
             </Button>

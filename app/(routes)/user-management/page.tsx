@@ -5,10 +5,9 @@ import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
 import { Plus, Building2, Shield, Users } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
-import { AddOrganizationDialog } from "./component/add-organization-dialog";
-import { AddRoleDialog } from "./component/add-role-dialog";
-import { AddUserDialog } from "./component/add-user-dialog";
-// import Organization from "./component/organization";
+import { AddOrganizationDialog } from "./component/modals/add-organization-dialog";
+import { AddRoleDialog } from "./component/modals/add-role-dialog";
+import { AddUserDialog } from "./component/modals/add-user-dialog";
 import Roles from "./component/roles";
 import UserList from "./component/user-list";
 import Organization from "./component/Organization";
@@ -30,33 +29,32 @@ type IconKey = "Building2" | "Shield" | "Users";
 
 export default function UserManagement() {
   const { data: tabsList = [], isLoading } = useTabsList();
-  // Dialog states for each tab
   const [isOrgDialogOpen, setIsOrgDialogOpen] = useState(false);
   const [isRoleDialogOpen, setIsRoleDialogOpen] = useState(false);
   const [isUserDialogOpen, setIsUserDialogOpen] = useState(false);
-
-  // Filter tabs that user has access to
- const accessibleTabs = useMemo(() => {
-  return tabsList?.filter((tab: TabItem) => tab.access === 1) ?? [];
-}, [tabsList?.length]);
-
+  const accessibleTabs = useMemo(() => {
+    return tabsList?.filter((tab: TabItem) => tab.access === 1) ?? [];
+  }, [tabsList?.length]);
 
   const [activeTab, setActiveTab] = useState<string>("");
 
   useEffect(() => {
-  if (accessibleTabs.length > 0 && !activeTab) {
-    setActiveTab(accessibleTabs[0].tab_name.toLowerCase());
-  }
-}, [accessibleTabs.length]);
+    if (!accessibleTabs.length) return;
+    const stored = localStorage.getItem("activeTab");
+    const validStoredTab = accessibleTabs.find(
+      (t: any) => t.tab_name.toLowerCase() === stored,
+    );
+
+    if (validStoredTab) {
+      setActiveTab(stored!);
+    } else {
+      const first = accessibleTabs[0].tab_name.toLowerCase();
+      setActiveTab(first);
+      localStorage.setItem("activeTab", first);
+    }
+  }, [accessibleTabs]);
 
 
-
-  // Get dynamic button text based on tab name
-  const getAddButtonText = (tabName: string): string => {
-    return `Add ${tabName}`;
-  };
-
-  // Handle add button click - opens the appropriate dialog
   const handleAddClick = (tabName: string) => {
     const name = tabName.toLowerCase().trim();
 
@@ -68,6 +66,10 @@ export default function UserManagement() {
       setIsUserDialogOpen(true);
     }
   };
+
+  const activeTabData = accessibleTabs.find(
+  (tab: any) => tab.tab_name.toLowerCase() === activeTab
+);
 
   if (isLoading) {
     return <div className="p-6">Loading tabs...</div>;
@@ -89,8 +91,14 @@ export default function UserManagement() {
           Manage your organization, roles, and users
         </p>
       </div>
-
-      <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+      <Tabs
+        value={activeTab}
+        onValueChange={(val) => {
+          setActiveTab(val);
+          localStorage.setItem("activeTab", val);
+        }}
+        className="w-full"
+      >
         <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
           <TabsList className="bg-muted/60 p-1 h-auto">
             {accessibleTabs.map((tab: TabItem) => {
@@ -99,7 +107,8 @@ export default function UserManagement() {
                 <TabsTrigger
                   key={tab.tab_name}
                   value={tab.tab_name.toLowerCase()}
-                  className="gap-2 px-4 py-2 text-sm font-medium data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-md transition-all duration-200"
+                  className="gap-2 px-4 py-2 text-sm font-medium data-[state=active]:bg-primary 
+                  data-[state=active]:text-primary-foreground data-[state=active]:shadow-md transition-all duration-200"
                 >
                   <IconComponent className="size-4" />
                   {tab.tab_name}
@@ -108,17 +117,15 @@ export default function UserManagement() {
             })}
           </TabsList>
 
-          {/* Dynamic Add Button based on active tab */}
           <Button
             onClick={() => handleAddClick(activeTab)}
             className="gap-2 shadow-sm hover:shadow-md transition-shadow text-text"
           >
             <Plus className="size-4" />
-            Add {activeTab}
+            Add {activeTabData?.add_button}
           </Button>
         </div>
 
-        {/* Tab Content Areas */}
         {accessibleTabs.map((tab: TabItem) => {
           const value = tab.tab_name.toLowerCase();
 
@@ -134,7 +141,6 @@ export default function UserManagement() {
         })}
       </Tabs>
 
-      {/* Dialogs */}
       <AddOrganizationDialog
         open={isOrgDialogOpen}
         onOpenChange={setIsOrgDialogOpen}

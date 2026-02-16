@@ -128,42 +128,7 @@ const users: User[] = [
     email: "pooja@gmail.com",
     role: "Viewer",
     status: "Inactive",
-  },
-  {
-    id: 1,
-    name: "Amit Bohra",
-    email: "amit@gmail.com",
-    role: "Admin",
-    status: "Active",
-  },
-  {
-    id: 2,
-    name: "Rahul Sharma",
-    email: "rahul@gmail.com",
-    role: "User",
-    status: "Inactive",
-  },
-  {
-    id: 3,
-    name: "Neha Verma",
-    email: "neha@gmail.com",
-    role: "Editor",
-    status: "Active",
-  },
-  {
-    id: 4,
-    name: "unal Singh",
-    email: "kunal@gmail.com",
-    role: "User",
-    status: "Active",
-  },
-  {
-    id: 5,
-    name: "Yash Mehta",
-    email: "pooja@gmail.com",
-    role: "Viewer",
-    status: "Inactive",
-  },
+  }
 ];
 
 export default function DataTable() {
@@ -237,7 +202,7 @@ export default function DataTable() {
 
   return (
     <div className="mx-4">
-      {/* 🔄 Toggle */}
+      {/*Toggle */}
       <div className="flex justify-between items-center mb-4">
         <Input
           placeholder="Search users..."
@@ -264,7 +229,7 @@ export default function DataTable() {
         </div>
       </div>
 
-      {/* 📋 TABLE */}
+      {/*TABLE */}
       {view === "table" && (
         <div className="rounded-xl border bg-card overflow-x-auto">
           <table className="w-full text-sm">
@@ -309,7 +274,7 @@ export default function DataTable() {
             </tbody>
           </table>
 
-          {/* 📄 Pagination */}
+          {/*Pagination */}
           <div className="flex items-center justify-between p-3">
             <span className="text-sm text-muted-foreground">
               Page {table.getState().pagination.pageIndex + 1} of{" "}
@@ -338,7 +303,7 @@ export default function DataTable() {
         </div>
       )}
 
-      {/* 🪪 CARD VIEW */}
+      {/* CARD VIEW */}
       {view === "card" && (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
           {table.getRowModel().rows.map((row) => (

@@ -22,9 +22,16 @@ import {
   Trash2,
   Search,
 } from "lucide-react";
-import { DeleteConfirmationDialog } from "./delete-confirmation-dialog";
-import { EditOrganizationDialog, EditUserDialog } from "./edit-dialog";
-import { useDeleteUser, usersList } from "./api";
+import { DeleteConfirmationDialog } from "./modals/delete-confirmation-dialog";
+import { EditOrganizationDialog, EditUserDialog } from "./modals/edit-dialog";
+import {
+  roleList,
+  useDeleteUser,
+  useEditUser,
+  useOrgList,
+  usersList,
+} from "./api";
+import { toast } from "sonner";
 
 type User = {
   id: number;
@@ -33,123 +40,105 @@ type User = {
   email: string;
   user_id: string;
   role: string;
+  roleId: string;
   organizationId: string;
   org: string;
 };
 
-type Role = {
-  id: number;
-  name: string;
-};
-
-type Organization = {
-  id: number;
-  name: string;
-};
-
-// Dummy organizations data
-const organizationsData: Organization[] = [
-  { id: 1, name: "Tech Corp" },
-  { id: 2, name: "Design Studio" },
-  { id: 3, name: "Marketing Inc" },
-  { id: 4, name: "Finance Group" },
-];
-
-// Dummy roles data
-const rolesData: Role[] = [
-  { id: 1, name: "Admin" },
-  { id: 2, name: "Manager" },
-  { id: 3, name: "Developer" },
-  { id: 4, name: "Designer" },
-  { id: 5, name: "Viewer" },
-];
 
 export default function UserList() {
-  // const [users, setUsers] = useState<User[]>(usersData);
   const [view, setView] = useState<"table" | "card">("table");
   const [sorting, setSorting] = useState<SortingState>([]);
   const [globalFilter, setGlobalFilter] = useState("");
   const { data = [], isLoading, error } = usersList();
-  // Edit dialog state
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [editingUser, setEditingUser] = useState<User | null>(null);
   const [editFirstName, setEditFirstName] = useState("");
   const [editLastName, setEditLastName] = useState("");
   const [editRoleId, setEditRoleId] = useState("");
   const [editOrganizationId, setEditOrganizationId] = useState("");
- const deleteUserMutation = useDeleteUser();
-  // Delete dialog state
+  const deleteUserMutation = useDeleteUser();
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [deletingUser, setDeletingUser] = useState<User | null>(null);
-  const roles = Array.from(
-    new Map(data.map((u:any) => [u.role, { id: u.role, name: u.role }])).values(),
-  );
+  const { mutate: editUser, isPending: isUpdating } = useEditUser();
+  const { data: roleData } = roleList();
+  const { data: orgData } = useOrgList();
 
-  const organizations = Array.from(
-    new Map(data.map((u:any) => [u.org, { id: u.org, name: u.org }])).values(),
-  );
+  const roles = Array.isArray(roleData)
+    ? roleData.map((r: any) => ({
+        id: r.role_id,
+        name: r.role_name,
+      }))
+    : [];
 
-  // Handle edit
+  const organizations = Array.isArray(orgData)
+    ? orgData.map((o: any) => ({
+        id: o.org_id,
+        name: o.org_name,
+      }))
+    : [];
+
   const handleEdit = (user: User) => {
     setEditingUser(user);
+
     setEditFirstName(user.first_name);
     setEditLastName(user.last_name);
-    setEditRoleId(user.user_id.toString());
+
+    const matchedRole = roles.find((r) => r.name === user.role);
+    setEditRoleId(matchedRole?.id?.toString() || "");
+
+    const matchedOrg = organizations.find(
+      (o: { name: string }) => o.name === user.org,
+    );
+    setEditOrganizationId(matchedOrg?.id?.toString() || "");
+
     setIsEditDialogOpen(true);
-    setEditOrganizationId(user.organizationId.toString());
   };
 
   const handleEditSave = () => {
-    // if (editingUser && editFirstName.trim() && editLastName.trim() && editRoleId) {
-    //     const selectedRole = rolesData.find((r) => r.id.toString() === editRoleId);
-    //     const selectedOrganization = organizationsData.find((org) => org.id.toString() === editOrganizationId);
-    //     setUsers((prev) =>
-    //         prev.map((user) =>
-    //             user.id === editingUser.id
-    //                 ? {
-    //                     ...user,
-    //                     firstName: editFirstName.trim(),
-    //                     lastName: editLastName.trim(),
-    //                     roleId: parseInt(editRoleId),
-    //                     roleName: selectedRole?.name || user.roleName,
-    //                     organizationId: parseInt(editOrganizationId),
-    //                     organizationName: selectedOrganization?.name || user.organizationName,
-    //                 }
-    //                 : user
-    //         )
-    //     );
-    //     setIsEditDialogOpen(false);
-    //     setEditingUser(null);
-    //     setEditFirstName("");
-    //     setEditLastName("");
-    //     setEditRoleId("");
-    //     setEditOrganizationId("");
-    // }
+    if (!editingUser) return;
+
+    editUser(
+      {
+        user_id: editingUser.user_id,
+        first_name: editFirstName.trim(),
+        last_name: editLastName.trim(),
+        org_id: editOrganizationId,
+        role_id: editRoleId,
+      },
+      {
+        onSuccess: () => {
+          toast.success("User updated successfully");
+          setIsEditDialogOpen(false);
+          setEditingUser(null);
+          setEditFirstName("");
+          setEditLastName("");
+          setEditRoleId("");
+          setEditOrganizationId("");
+        },
+      },
+    );
   };
 
-  // Handle delete
   const handleDelete = (user: User) => {
     setDeletingUser(user);
     setIsDeleteDialogOpen(true);
   };
 
-const handleDeleteConfirm = () => {
-  if (!deletingUser) return;
+  const handleDeleteConfirm = () => {
+    if (!deletingUser) return;
 
-  deleteUserMutation.mutate(
-    { user_id: deletingUser.user_id },   // ✅ payload object
-    {
-      onSuccess: () => {
-        setIsDeleteDialogOpen(false);
-        setDeletingUser(null);
+    deleteUserMutation.mutate(
+      { user_id: deletingUser.user_id },
+      {
+        onSuccess: () => {
+          toast.success("User deleted successfully");
+          setIsDeleteDialogOpen(false);
+          setDeletingUser(null);
+        },
       },
-      onError: (error) => {
-        console.error("Delete failed:", error);
-      },
-    }
-  );
-};
-
+    );
+  };
 
   const columns: ColumnDef<User>[] = [
     {
@@ -280,7 +269,6 @@ const handleDeleteConfirm = () => {
 
   return (
     <div className="space-y-4">
-      {/* Header with Search and View Toggle */}
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div className="relative max-w-sm">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-muted-foreground" />
@@ -322,7 +310,6 @@ const handleDeleteConfirm = () => {
         </div>
       </div>
 
-      {/* Table View */}
       {view === "table" && (
         <div className="rounded-lg border border-border bg-card overflow-hidden">
           <div className="overflow-x-auto">
@@ -408,7 +395,6 @@ const handleDeleteConfirm = () => {
         </div>
       )}
 
-      {/* Card View */}
       {view === "card" && (
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
           {table.getRowModel().rows.map((row, index) => (
@@ -417,7 +403,6 @@ const handleDeleteConfirm = () => {
               className="group hover:shadow-lg hover:border-primary/30 transition-all duration-200 border-border"
             >
               <CardContent className="p-4">
-                {/* Row 1: Name and Role Badge */}
                 <div className="flex items-center justify-between w-full">
                   <div className="flex items-center gap-2">
                     <span className="text-xs text-muted-foreground font-medium">
@@ -432,7 +417,6 @@ const handleDeleteConfirm = () => {
                   </span>
                 </div>
 
-                {/* Row 2: Email and Organization */}
                 <div className="mt-2 space-y-1">
                   <span className="text-xs text-muted-foreground block">
                     {row.original.email}
@@ -442,7 +426,6 @@ const handleDeleteConfirm = () => {
                   </span>
                 </div>
 
-                {/* Row 3: Edit, Delete */}
                 <div className="flex items-center justify-end mt-3 pt-3 border-t border-border">
                   <div className="flex items-center gap-1">
                     <Button
@@ -474,7 +457,6 @@ const handleDeleteConfirm = () => {
         </div>
       )}
 
-      {/* Edit Dialog */}
       <EditUserDialog
         open={isEditDialogOpen}
         onOpenChange={setIsEditDialogOpen}
@@ -491,7 +473,6 @@ const handleDeleteConfirm = () => {
         onSave={handleEditSave}
       />
 
-      {/* Delete Confirmation Dialog */}
       <DeleteConfirmationDialog
         open={isDeleteDialogOpen}
         onOpenChange={setIsDeleteDialogOpen}

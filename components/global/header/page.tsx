@@ -1,10 +1,8 @@
 "use client";
-
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useSelector } from "react-redux";
-
+import { useDispatch, useSelector } from "react-redux";
 import Logo from "@/components/logo";
 import { ModeToggle } from "@/components/toggleMode";
 import { Button } from "@/components/ui/button";
@@ -19,11 +17,13 @@ import {
 import { clearSession } from "@/utils/storage";
 
 import type { RootState } from "@/redux/store";
+import { logout } from "@/redux/authSlice";
 
 export default function Header() {
   const [addBorder, setAddBorder] = useState(false);
   const user = useSelector((state: RootState) => state.auth.user);
   const firstLetter = user?.firstname?.charAt(0).toUpperCase();
+  const dispatch = useDispatch();
 
   const router = useRouter();
 
@@ -33,10 +33,12 @@ export default function Header() {
     return () => window.removeEventListener("scroll", handleScroll);
   }, []);
 
-  const logOut = () => {
-    clearSession(); // optional: also clear redux store if needed
-    router.push("/login");
-  };
+ const logOut = () => {
+  dispatch(logout());   
+  clearSession();       
+  router.push("/login");
+};
+
 
   return (
     <header

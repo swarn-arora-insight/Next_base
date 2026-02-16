@@ -22,7 +22,10 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Users, Eye, EyeOff } from "lucide-react";
-import { useCreateUser, usersList } from "./api";
+import { roleList, useCreateUser, useOrgList} from "../api";
+import { useSelector } from "react-redux";
+import { RootState } from "@/redux/store";
+import { toast } from "sonner";
 
 interface AddUserDialogProps {
   open: boolean;
@@ -52,16 +55,11 @@ export function AddUserDialog({ open, onOpenChange }: AddUserDialogProps) {
   const [touched, setTouched] = useState(false);
   const [fieldTouched, setFieldTouched] = useState<Record<string, boolean>>({});
   const { mutate: createUser, isPending } = useCreateUser();
-  const { data: users = [] } = usersList();
-
-  const roles = Array.from(
-    new Map(users.map((u) => [u.role, { id: u.role, name: u.role }])).values(),
-  );
-
-  const organizations = Array.from(
-    new Map(users.map((u) => [u.org, { id: u.org, name: u.org }])).values(),
-  );
-
+  const { data: roleData } = roleList();
+  const { data: orgData } = useOrgList();
+  const roles = Array.isArray(roleData) ? roleData : [];
+  const organizations = Array.isArray(orgData) ? orgData : [];
+ 
   const validatePassword = (pwd: string): string | undefined => {
     if (!pwd) return "Password is required";
     if (pwd.length < 8) return "Password must be at least 8 characters";
@@ -182,11 +180,9 @@ export function AddUserDialog({ open, onOpenChange }: AddUserDialogProps) {
       },
       {
         onSuccess: () => {
+          toast.success("User Created successfully");
           resetForm();
           onOpenChange(false);
-        },
-        onError: (error) => {
-          console.error(error);
         },
       },
     );
@@ -204,12 +200,6 @@ export function AddUserDialog({ open, onOpenChange }: AddUserDialogProps) {
     setTouched(false);
     setFieldTouched({});
   };
-
-  const handleClose = () => {
-    resetForm();
-    onOpenChange(false);
-  };
-
   const RequiredStar = () => <span className="text-destructive ml-0.5">*</span>;
 
   return (
@@ -228,7 +218,8 @@ export function AddUserDialog({ open, onOpenChange }: AddUserDialogProps) {
             </div>
           </div>
         </DialogHeader>
-        <form onSubmit={handleSubmit} className="mt-4">
+        <form onSubmit={handleSubmit} className="mt-4"
+          autoComplete="off">
           <div className="space-y-4">
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
@@ -278,6 +269,7 @@ export function AddUserDialog({ open, onOpenChange }: AddUserDialogProps) {
                 id="email"
                 type="email"
                 placeholder="john.doe@example.com"
+                autoComplete="new-email"
                 value={email}
                 onChange={(e) =>
                   handleFieldChange("email", e.target.value, setEmail)
@@ -308,9 +300,9 @@ export function AddUserDialog({ open, onOpenChange }: AddUserDialogProps) {
                   <SelectValue placeholder="Select organization" />
                 </SelectTrigger>
                 <SelectContent>
-                  {organizations.map((org) => (
-                    <SelectItem key={org.id} value={org.id}>
-                      {org.name}
+                  {organizations.map((org: any) => (
+                    <SelectItem key={org.org_id} value={org.org_id}>
+                      {org.org_name}
                     </SelectItem>
                   ))}
                 </SelectContent>
@@ -343,8 +335,8 @@ export function AddUserDialog({ open, onOpenChange }: AddUserDialogProps) {
                 </SelectTrigger>
                 <SelectContent>
                   {roles.map((role) => (
-                    <SelectItem key={role.id} value={role.id}>
-                      {role.name}
+                    <SelectItem key={role.role_id} value={role.role_id}>
+                      {role.role_name}
                     </SelectItem>
                   ))}
                 </SelectContent>
@@ -364,6 +356,7 @@ export function AddUserDialog({ open, onOpenChange }: AddUserDialogProps) {
                   id="password"
                   type={showPassword ? "text" : "password"}
                   placeholder="Enter password"
+                  autoComplete="new-password"
                   value={password}
                   onChange={(e) => {
                     const value = e.target.value;
@@ -403,6 +396,7 @@ export function AddUserDialog({ open, onOpenChange }: AddUserDialogProps) {
                   id="confirm-password"
                   type={showConfirmPassword ? "text" : "password"}
                   placeholder="Confirm password"
+                  autoComplete="new-password"
                   value={confirmPassword}
                   onChange={(e) => {
                     const value = e.target.value;
@@ -437,14 +431,6 @@ export function AddUserDialog({ open, onOpenChange }: AddUserDialogProps) {
           </div>
 
           <DialogFooter className="mt-6">
-            <Button
-              type="button"
-              variant="outline"
-              onClick={handleClose}
-              className="bg-transparent text-foreground border-border hover:bg-muted"
-            >
-              Cancel
-            </Button>
             <Button type="submit" className="text-text">
               Create User
             </Button>

@@ -15,7 +15,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Shield } from "lucide-react";
-import { useCreateRole } from "./api";
+import { useCreateRole } from "../api";
 import { toast } from "sonner";
 
 interface AddRoleDialogProps {
@@ -44,13 +44,11 @@ export function AddRoleDialog({ open, onOpenChange }: AddRoleDialogProps) {
 
   const validateField = (field: string, value: string) => {
     const newErrors = { ...errors };
-
     if (field === "roleName") {
       const error = validateRoleName(value);
       if (error) newErrors.roleName = error;
       else delete newErrors.roleName;
     }
-
     setErrors(newErrors);
   };
 
@@ -66,10 +64,8 @@ export function AddRoleDialog({ open, onOpenChange }: AddRoleDialogProps) {
 
   const validateForm = (): boolean => {
     const newErrors: FormErrors = {};
-
     const roleNameError = validateRoleName(roleName);
     if (roleNameError) newErrors.roleName = roleNameError;
-
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
@@ -77,25 +73,20 @@ export function AddRoleDialog({ open, onOpenChange }: AddRoleDialogProps) {
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     setTouched(true);
-
     if (!validateForm()) return;
-
     createRole(
-        { role_name: roleName },
-        {
-            onSuccess: () => {
-                toast.success("Role created successfully");
-                resetForm();
-                onOpenChange(false);
-            },
-            onError: (error: any) => {
-                toast.error(error?.message || "Failed to create role");
-            },
-        }
+      {
+        role_name: roleName,
+      },
+      {
+        onSuccess: () => {
+          toast.success("Role created successfully");
+          resetForm();
+          onOpenChange(false);
+        },
+      },
     );
-};
-
-
+  };
   const resetForm = () => {
     setRoleName("");
     setErrors({});
@@ -103,10 +94,6 @@ export function AddRoleDialog({ open, onOpenChange }: AddRoleDialogProps) {
     setFieldTouched({});
   };
 
-  const handleClose = () => {
-    resetForm();
-    onOpenChange(false);
-  };
 
   const showError = (field: string) =>
     (touched || fieldTouched[field]) && errors[field as keyof FormErrors];
@@ -149,14 +136,6 @@ export function AddRoleDialog({ open, onOpenChange }: AddRoleDialogProps) {
             </div>
           </div>
           <DialogFooter className="mt-6">
-            <Button
-              type="button"
-              variant="outline"
-              onClick={handleClose}
-              className="bg-transparent text-foreground border-border hover:bg-muted"
-            >
-              Cancel
-            </Button>
             <Button type="submit" className="text-text">
               Create Role
             </Button>

@@ -1,7 +1,9 @@
 "use client";
-import { useState } from "react";
+
 import Image from "next/image";
 import { useRouter } from "next/navigation";
+import { useState } from "react";
+import { useForm } from "react-hook-form";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -12,46 +14,31 @@ import { toast } from "sonner";
 import { useDispatch } from "react-redux";
 import { setApiToken, setUser } from "@/redux/authSlice";
 
+type LoginFormValues = {
+  email: string;
+  password: string;
+};
+
 export default function LoginForm() {
   const router = useRouter();
-
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
-  const [emailError, setEmailError] = useState("");
-  const [passwordError, setPasswordError] = useState("");
-  const [authError, setAuthError] = useState("");
-  const [showPassword, setShowPassword] = useState(false);
-  const [isLoading, setIsLoading] = useState(false);
   const dispatch = useDispatch();
+  const [showPassword, setShowPassword] = useState(false);
+  const {
+    register,
+    handleSubmit,
+    formState: { errors, isSubmitting },
+    setError,
+  } = useForm<LoginFormValues>();
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (isLoading) return;
-
-    setEmailError("");
-    setPasswordError("");
-    setAuthError("");
-
-    let isValid = true;
-    if (!email.trim()) {
-      setEmailError("Email is required");
-      isValid = false;
-    }
-    if (!password.trim()) {
-      setPasswordError("Password is required");
-      isValid = false;
-    }
-    if (!isValid) return;
-
+  const onSubmit = async (data: LoginFormValues) => {
     try {
-      setIsLoading(true);
+      const res = await loginApi(data);
 
-      const res = await loginApi({ email, password });
       dispatch(
         setUser({
           firstname: res.firstName,
           lastname: res.lastName,
-        }),
+        })
       );
 
       if (res.token) {
@@ -59,12 +46,11 @@ export default function LoginForm() {
       }
 
       toast.success("Login successful");
-
       router.push("/dashboard");
-    } catch (err) {
-      setAuthError("Invalid email or password");
-    } finally {
-      setIsLoading(false);
+    } catch {
+      setError("root", {
+        message: "Invalid email or password",
+      });
     }
   };
 
@@ -82,22 +68,28 @@ export default function LoginForm() {
         </CardHeader>
 
         <CardContent>
-          <form onSubmit={handleSubmit} className="grid gap-4">
+          <form onSubmit={handleSubmit(onSubmit)} className="grid gap-4">
+
             {/* Email */}
             <div className="grid gap-1">
               <Label className="mb-2">
                 Username <span className="text-primary">*</span>
               </Label>
+
               <Input
                 type="email"
-                value={email}
-                disabled={isLoading}
-                onChange={(e) => setEmail(e.target.value)}
                 placeholder="m@example.com"
-                className={emailError ? "border-destructive" : ""}
+                disabled={isSubmitting}
+                {...register("email", {
+                  required: "Email is required",
+                })}
+                className={errors.email ? "border-destructive" : ""}
               />
-              {emailError && (
-                <span className="text-destructive text-xs">{emailError}</span>
+
+              {errors.email && (
+                <span className="text-destructive text-xs">
+                  {errors.email.message}
+                </span>
               )}
             </div>
 
@@ -110,16 +102,19 @@ export default function LoginForm() {
               <div className="relative">
                 <Input
                   type={showPassword ? "text" : "password"}
-                  value={password}
-                  disabled={isLoading}
-                  onChange={(e) => setPassword(e.target.value)}
                   placeholder="example123"
-                  className={`pr-10 ${passwordError ? "border-destructive" : ""}`}
+                  disabled={isSubmitting}
+                  {...register("password", {
+                    required: "Password is required",
+                  })}
+                  className={`pr-10 ${
+                    errors.password ? "border-destructive" : ""
+                  }`}
                 />
 
                 <button
                   type="button"
-                  onClick={() => setShowPassword(!showPassword)}
+                  onClick={() => setShowPassword((prev) => !prev)}
                   className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500"
                 >
                   {showPassword ? (
@@ -130,26 +125,27 @@ export default function LoginForm() {
                 </button>
               </div>
 
-              {passwordError && (
+              {errors.password && (
                 <span className="text-destructive text-xs">
-                  {passwordError}
+                  {errors.password.message}
                 </span>
               )}
             </div>
 
-            {authError && (
+            {/* Auth Error */}
+            {errors.root && (
               <p className="text-destructive text-sm text-center">
-                {authError}
+                {errors.root.message}
               </p>
             )}
 
             {/* Submit */}
             <Button
               type="submit"
-              disabled={isLoading}
+              disabled={isSubmitting}
               className="w-full mt-3 rounded-full bg-primary hover:bg-primary/80"
             >
-              {isLoading ? (
+              {isSubmitting ? (
                 <>
                   <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                   Processing...
@@ -161,6 +157,7 @@ export default function LoginForm() {
                 </>
               )}
             </Button>
+
           </form>
         </CardContent>
       </Card>

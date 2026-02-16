@@ -29,11 +29,12 @@ import {
   Search,
   List,
 } from "lucide-react";
-import { DeleteConfirmationDialog } from "./delete-confirmation-dialog";
-import { EditRoleDialog } from "./edit-dialog";
-import { FeatureListDialog } from "./feature-list-dialog";
+import { DeleteConfirmationDialog } from "./modals/delete-confirmation-dialog";
+import { EditRoleDialog } from "./modals/edit-dialog";
+import { FeatureListDialog } from "./modals/feature-list-dialog";
 import { Feature } from "@/interface/interface";
-import { RoleApiResponse, roleList, useEditRole } from "./api";
+import { RoleApiResponse, roleList, useDeleteRole, useEditRole } from "./api";
+import { toast } from "sonner";
 
 type Role = {
   id: string;
@@ -54,6 +55,7 @@ export default function RolesList() {
   const [deletingRole, setDeletingRole] = useState<Role | null>(null);
   const { mutate: editRole, isPending: isEditing } = useEditRole();
   const [isFeatureListOpen, setIsFeatureListOpen] = useState(false);
+  const { mutate: deleteRole, isPending: isDeleting } = useDeleteRole();
   const [selectedRoleForFeatures, setSelectedRoleForFeatures] =
     useState<Role | null>(null);
 
@@ -68,9 +70,10 @@ export default function RolesList() {
   const roles: Role[] = useMemo(() => {
     return data ? mapApiRolesToUi(data) : [];
   }, [data]);
+
   const handleEdit = (role: Role) => {
     setEditingRole(role);
-    setEditRoleName(role.name);
+    setEditRoleName(role.name);;
     setIsEditDialogOpen(true);
   };
 
@@ -87,9 +90,7 @@ export default function RolesList() {
           setIsEditDialogOpen(false);
           setEditingRole(null);
           setEditRoleName("");
-        },
-        onError: (error) => {
-          console.error("Edit role failed:", error);
+          toast.success("Role updated successfully");
         },
       },
     );
@@ -101,11 +102,18 @@ export default function RolesList() {
   };
 
   const handleDeleteConfirm = () => {
-    // if (deletingRole) {
-    //     setRoles((prev) => prev.filter((role) => role.id !== deletingRole.id));
-    //     setIsDeleteDialogOpen(false);
-    //     setDeletingRole(null);
-    // }
+    if (!deletingRole) return;
+
+    deleteRole(
+      { role_id: deletingRole.id },
+      {
+        onSuccess: () => {
+          setIsDeleteDialogOpen(false);
+          setDeletingRole(null);
+          toast.success("Role deleted successfully");
+        },
+      },
+    );
   };
 
   // Handle feature list click
@@ -122,11 +130,6 @@ export default function RolesList() {
       access: f.access,
       group: f.group_id,
     }));
-
-    console.log(
-      `Saved features for role ${selectedRoleForFeatures?.name}:`,
-      mappedFeatures,
-    );
 
     setIsFeatureListOpen(false);
     setSelectedRoleForFeatures(null);
@@ -147,7 +150,7 @@ export default function RolesList() {
         header: "S.No",
         cell: ({ row }) => (
           <span className="text-muted-foreground font-medium">
-            {row.original.id}
+            {row.index + 1}
           </span>
         ),
       },
@@ -190,21 +193,27 @@ export default function RolesList() {
       {
         id: "userNames",
         header: "User Names",
-        cell: ({ row }) => (
-          <TooltipProvider>
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <span className="text-muted-foreground cursor-default">
-                  {getTruncatedUserNames(row.original.userNames)}
-                </span>
-              </TooltipTrigger>
-              <TooltipContent side="top" className="max-w-xs">
-                <p className="text-sm">{row.original.userNames.join(", ")}</p>
-              </TooltipContent>
-            </Tooltip>
-          </TooltipProvider>
-        ),
+        cell: ({ row }) =>
+          row.original.userNames.length > 0 ? (
+            <TooltipProvider>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <span className="block max-w-[200px] truncate cursor-default text-muted-foreground">
+                    {row.original.userNames.join(", ")}
+                  </span>
+                </TooltipTrigger>
+                <TooltipContent side="top" className="max-w-xs">
+                  <p className="text-sm">{row.original.userNames.join(", ")}</p>
+                </TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
+          ) : (
+            <span className="block max-w-[200px] truncate italic text-muted-foreground">
+              No User
+            </span>
+          ),
       },
+
       {
         id: "features",
         header: "Features",
@@ -233,14 +242,16 @@ export default function RolesList() {
             >
               <Pencil className="size-4" />
             </Button>
-            <Button
-              variant="ghost"
-              size="icon"
-              onClick={() => handleDelete(row.original)}
-              className="size-8 text-destructive bg-destructive/10 hover:bg-destructive/20 hover:scale-110 transition-all duration-200"
-            >
-              <Trash2 className="size-4" />
-            </Button>
+            {row.original.userNames.length == 0 && (
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={() => handleDelete(row.original)}
+                className="size-8 text-destructive bg-destructive/10 hover:bg-destructive/20 hover:scale-110 transition-all duration-200"
+              >
+                <Trash2 className="size-4" />
+              </Button>
+            )}
           </div>
         ),
       },
@@ -277,7 +288,6 @@ export default function RolesList() {
 
   return (
     <div className="space-y-4">
-      {/* Header with Search and View Toggle */}
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div className="relative max-w-sm">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-muted-foreground" />
@@ -427,20 +437,26 @@ export default function RolesList() {
                   <span className="font-medium">
                     {row.original.userCount} users:{" "}
                   </span>
-                  <TooltipProvider>
-                    <Tooltip>
-                      <TooltipTrigger asChild>
-                        <span className="cursor-default">
-                          {getTruncatedUserNames(row.original.userNames, 25)}
-                        </span>
-                      </TooltipTrigger>
-                      <TooltipContent side="top" className="max-w-xs">
-                        <p className="text-sm">
-                          {row.original.userNames.join(", ")}
-                        </p>
-                      </TooltipContent>
-                    </Tooltip>
-                  </TooltipProvider>
+                  {row.original.userNames.length > 0 ? (
+                    <TooltipProvider>
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <span className="cursor-default">
+                            {getTruncatedUserNames(row.original.userNames, 25)}
+                          </span>
+                        </TooltipTrigger>
+                        <TooltipContent side="top" className="max-w-xs">
+                          <p className="text-sm">
+                            {row.original.userNames.join(", ")}
+                          </p>
+                        </TooltipContent>
+                      </Tooltip>
+                    </TooltipProvider>
+                  ) : (
+                    <span className="italic text-muted-foreground">
+                      No User
+                    </span>
+                  )}
                 </div>
 
                 {/* Row 3: Feature List, Edit, Delete */}
@@ -463,14 +479,16 @@ export default function RolesList() {
                     >
                       <Pencil className="size-3.5" />
                     </Button>
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      onClick={() => handleDelete(row.original)}
-                      className="size-8 text-destructive bg-destructive/10 hover:bg-destructive/20 hover:scale-110 transition-all duration-200"
-                    >
-                      <Trash2 className="size-3.5" />
-                    </Button>
+                    {row.original.userNames.length == 0 && (
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        onClick={() => handleDelete(row.original)}
+                        className="size-8 text-destructive bg-destructive/10 hover:bg-destructive/20 hover:scale-110 transition-all duration-200"
+                      >
+                        <Trash2 className="size-3.5" />
+                      </Button>
+                    )}
                   </div>
                 </div>
               </CardContent>
@@ -484,30 +502,28 @@ export default function RolesList() {
         </div>
       )}
 
-      {/* Edit Role Dialog */}
       <EditRoleDialog
         open={isEditDialogOpen}
         onOpenChange={setIsEditDialogOpen}
         roleName={editRoleName}
         onRoleNameChange={setEditRoleName}
         onSave={handleEditSave}
-      />
+      /> 
 
-      {/* Delete Confirmation Dialog */}
       <DeleteConfirmationDialog
         open={isDeleteDialogOpen}
         onOpenChange={setIsDeleteDialogOpen}
         title="Role"
         itemName={deletingRole?.name ?? ""}
         onConfirm={handleDeleteConfirm}
-      />
+      /> 
 
-      {/* Feature List Dialog */}
       <FeatureListDialog
         open={isFeatureListOpen}
         onOpenChange={setIsFeatureListOpen}
         roleName={selectedRoleForFeatures?.name ?? ""}
         onSave={handleFeatureListSave}
+        roleId={selectedRoleForFeatures?.id ?? ""}
       />
     </div>
   );

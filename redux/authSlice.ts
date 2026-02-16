@@ -30,7 +30,6 @@ const authSlice = createSlice({
     logout(state) {
       state.user = null;
       state.apiToken = null;
-      localStorage.clear(); // optional but recommended
     },
   },
 });

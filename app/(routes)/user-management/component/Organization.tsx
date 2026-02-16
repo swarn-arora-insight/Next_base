@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import {
   ColumnDef,
   flexRender,
@@ -22,10 +22,10 @@ import {
   Trash2,
   Search,
 } from "lucide-react";
-import { DeleteConfirmationDialog } from "./delete-confirmation-dialog";
-import { EditOrganizationDialog } from "./edit-dialog";
-import { useOrgList , useDeleteOrg, useEditOrg } from "./api";
-import { useQueryClient } from "@tanstack/react-query";
+import { DeleteConfirmationDialog } from "./modals/delete-confirmation-dialog";
+import { useOrgList, useDeleteOrg, useEditOrg } from "./api";
+import { EditOrganizationDialog } from "./modals/edit-dialog";
+import { toast } from "sonner";
 
 type Organization = {
   org_id: string;
@@ -36,44 +36,22 @@ export default function OrganizationList() {
   const [view, setView] = useState<"table" | "card">("table");
   const [sorting, setSorting] = useState<SortingState>([]);
   const [globalFilter, setGlobalFilter] = useState("");
-  const { data = [], isLoading, error } = useOrgList ();
+  const { data = [], isLoading, error } = useOrgList();
   const deleteOrgMutation = useDeleteOrg();
   const editOrgMutation = useEditOrg();
-
-  // Edit dialog state
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [editingOrg, setEditingOrg] = useState<Organization | null>(null);
   const [editName, setEditName] = useState("");
-
-  // Delete dialog state
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [deletingOrg, setDeletingOrg] = useState<Organization | null>(null);
 
-  // Handle edit
   const handleEdit = (org: Organization) => {
     setEditingOrg(org);
     setEditName(org.org_name);
     setIsEditDialogOpen(true);
   };
 
-  //     useEffect(() => {
-  //   if (data) {
-  //     setOrganizations(data);
-  //   }
-  // }, [data]);
-  //   const handleEditSave = () => {
-  //     if (editingOrg && editName.trim()) {
-  //       setOrganizations((prev) =>
-  //         prev.map((org) =>
-  //           org.id === editingOrg.id ? { ...org, name: editName.trim() } : org,
-  //         ),
-  //       );
-  //       setIsEditDialogOpen(false);
-  //       setEditingOrg(null);
-  //       setEditName("");
-  //     }
-  //   };
- const handleEditSave = () => {
+  const handleEditSave = () => {
   if (!editingOrg || !editName.trim()) return;
 
   editOrgMutation.mutate(
@@ -82,43 +60,37 @@ export default function OrganizationList() {
       org_name: editName.trim(),
     },
     {
-       onSuccess: () => {
+      onSuccess: () => {
+        toast.success("Organization updated successfully");
         setIsEditDialogOpen(false);
         setEditingOrg(null);
         setEditName("");
       },
-      onError: (err) => {
-        console.error("Edit failed", err);
-      },
     }
   );
 };
-
 
   const handleDelete = (org: Organization) => {
     setDeletingOrg(org);
     setIsDeleteDialogOpen(true);
   };
 
-const handleDeleteConfirm = () => {
-  if (!deletingOrg) return;
+  const handleDeleteConfirm = () => {
+    if (!deletingOrg) return;
 
-  deleteOrgMutation.mutate(
-    {
+    deleteOrgMutation.mutate(
+      {
         org_id: deletingOrg.org_id,
-    },
-    {
-      onSuccess: () => {
-        setIsDeleteDialogOpen(false);
-        setDeletingOrg(null);
       },
-      onError: (err) => {
-        console.error("Delete failed", err);
+      {
+        onSuccess: () => {
+          toast.success("Organization deleted successfully");
+          setIsDeleteDialogOpen(false);
+          setDeletingOrg(null);
+        },
       },
-    }
-  );
-};
-
+    );
+  };
 
   const columns: ColumnDef<Organization>[] = [
     {
@@ -192,6 +164,7 @@ const handleDeleteConfirm = () => {
   });
 
   if (isLoading) return <div>Loading organizations...</div>;
+  
   if (error) return <div>Failed to load organizations</div>;
   return (
     <div className="space-y-4">
@@ -332,7 +305,6 @@ const handleDeleteConfirm = () => {
               className="group hover:shadow-lg hover:border-primary/30 transition-all duration-200 border-border"
             >
               <CardContent className="p-4">
-                {/* Row 1: Organization Name (Full Width) */}
                 <div className="flex items-center gap-2 w-full">
                   <span className="text-xs text-muted-foreground font-medium">
                     #{index + 1}
@@ -342,7 +314,6 @@ const handleDeleteConfirm = () => {
                   </span>
                 </div>
 
-                {/* Row 2: Edit, Delete */}
                 <div className="flex items-center justify-end mt-3 pt-3 border-t border-border">
                   <div className="flex items-center gap-1">
                     <Button
@@ -374,7 +345,6 @@ const handleDeleteConfirm = () => {
         </div>
       )}
 
-      {/* Edit Dialog */}
       <EditOrganizationDialog
         open={isEditDialogOpen}
         onOpenChange={setIsEditDialogOpen}
@@ -384,7 +354,6 @@ const handleDeleteConfirm = () => {
         orgId={editingOrg?.org_id ?? ""}
       />
 
-      {/* Delete Confirmation Dialog */}
       <DeleteConfirmationDialog
         open={isDeleteDialogOpen}
         onOpenChange={setIsDeleteDialogOpen}

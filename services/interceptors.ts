@@ -1,11 +1,9 @@
 
 "use client";
 import { AxiosInstance, InternalAxiosRequestConfig } from "axios";
-import { toast } from "sonner";
 import { getToken, setToken, setApiToken, clearSession } from "@/utils/storage";
 
 export const applyInterceptors = (axiosInstance: AxiosInstance) => {
-
   /* ================= REQUEST ================= */
   axiosInstance.interceptors.request.use(
     (config: InternalAxiosRequestConfig) => {
@@ -41,6 +39,4 @@ export const applyInterceptors = (axiosInstance: AxiosInstance) => {
       return Promise.reject(error);
     }
   );
-
-
 };
