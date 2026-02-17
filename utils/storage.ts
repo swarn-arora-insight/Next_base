@@ -15,6 +15,5 @@ export const getToken = () => {
 export const setApiToken = (token: string) => localStorage.setItem("apiToken", token);
 export const getApiToken = () => localStorage.getItem("apiToken");
 export const clearSession = () => {
-  localStorage.removeItem("authorization");
-  localStorage.removeItem("apiToken");
+  localStorage.clear();
 };

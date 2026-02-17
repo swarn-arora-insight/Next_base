@@ -12,6 +12,8 @@ import Roles from "./component/roles";
 import UserList from "./component/user-list";
 import Organization from "./component/Organization";
 import { useTabsList } from "./component/api";
+import { RootState } from "@/redux/store";
+import { useSelector } from "react-redux";
 
 interface TabItem {
   tab_name: string;
@@ -32,9 +34,32 @@ export default function UserManagement() {
   const [isOrgDialogOpen, setIsOrgDialogOpen] = useState(false);
   const [isRoleDialogOpen, setIsRoleDialogOpen] = useState(false);
   const [isUserDialogOpen, setIsUserDialogOpen] = useState(false);
+  const features = useSelector((state: RootState) => state.feature.features);
+  const uamPermissions = useMemo(() => {
+    const uamGroup = features?.find((grp) => grp.feature_grp_name === "UAM");
+    const list = uamGroup?.feature_list ?? [];
+    return list.reduce<Record<string, number>>((acc, feature) => {
+      acc[feature.feature_name.toLowerCase()] = feature.permission_level;
+      return acc;
+    }, {});
+  }, [features]);
+
+  // const accessibleTabs = useMemo(() => {
+  //   return tabsList?.filter((tab: TabItem) => tab.access === 1) ?? [];
+  // }, [tabsList?.length]);
+
   const accessibleTabs = useMemo(() => {
-    return tabsList?.filter((tab: TabItem) => tab.access === 1) ?? [];
-  }, [tabsList?.length]);
+    return (
+      tabsList?.filter((tab: TabItem) => {
+        if (tab.access !== 1) return false;
+        const tabName = tab.tab_name.toLowerCase();
+        const permission = uamPermissions[tabName];
+        if (permission === 1) return false;
+
+        return true;
+      }) ?? []
+    );
+  }, [tabsList, uamPermissions]);
 
   const [activeTab, setActiveTab] = useState<string>("");
 
@@ -54,7 +79,6 @@ export default function UserManagement() {
     }
   }, [accessibleTabs]);
 
-
   const handleAddClick = (tabName: string) => {
     const name = tabName.toLowerCase().trim();
 
@@ -68,8 +92,8 @@ export default function UserManagement() {
   };
 
   const activeTabData = accessibleTabs.find(
-  (tab: any) => tab.tab_name.toLowerCase() === activeTab
-);
+    (tab: any) => tab.tab_name.toLowerCase() === activeTab,
+  );
 
   if (isLoading) {
     return <div className="p-6">Loading tabs...</div>;

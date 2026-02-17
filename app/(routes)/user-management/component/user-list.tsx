@@ -32,6 +32,8 @@ import {
   usersList,
 } from "./api";
 import { toast } from "sonner";
+import { useSelector } from "react-redux";
+import { RootState } from "@/redux/store";
 
 type User = {
   id: number;
@@ -44,7 +46,6 @@ type User = {
   organizationId: string;
   org: string;
 };
-
 
 export default function UserList() {
   const [view, setView] = useState<"table" | "card">("table");
@@ -63,7 +64,7 @@ export default function UserList() {
   const { mutate: editUser, isPending: isUpdating } = useEditUser();
   const { data: roleData } = roleList();
   const { data: orgData } = useOrgList();
-
+  const features = useSelector((state: RootState) => state.feature.features);
   const roles = Array.isArray(roleData)
     ? roleData.map((r: any) => ({
         id: r.role_id,
@@ -138,6 +139,16 @@ export default function UserList() {
         },
       },
     );
+  };
+
+  const uamPermission = features
+    ?.find((grp) => grp.feature_grp_name === "UAM")
+    ?.feature_list?.find((f) => f.feature_name === "Users")?.permission_level;
+  const canEdit = uamPermission === 3 || uamPermission === 4;
+  const canDelete = uamPermission === 4;
+
+  const showPermissionToast = () => {
+    toast.error("You do not have permission to perform this action.");
   };
 
   const columns: ColumnDef<User>[] = [
@@ -227,7 +238,9 @@ export default function UserList() {
           <Button
             variant="ghost"
             size="icon"
-            onClick={() => handleEdit(row.original)}
+            onClick={() =>
+              canEdit ? handleEdit(row.original) : showPermissionToast()
+            }
             className="size-8 text-primary bg-primary/10 hover:bg-primary/20 hover:scale-110 transition-all duration-200"
           >
             <Pencil className="size-4" />
@@ -236,7 +249,9 @@ export default function UserList() {
           <Button
             variant="ghost"
             size="icon"
-            onClick={() => handleDelete(row.original)}
+            onClick={() =>
+              canDelete ? handleDelete(row.original) : showPermissionToast()
+            }
             className="size-8 text-destructive bg-destructive/10 hover:bg-destructive/20 hover:scale-110 transition-all duration-200"
           >
             <Trash2 className="size-4" />
@@ -431,7 +446,11 @@ export default function UserList() {
                     <Button
                       variant="ghost"
                       size="icon"
-                      onClick={() => handleEdit(row.original)}
+                      onClick={() =>
+                        canEdit
+                          ? handleEdit(row.original)
+                          : showPermissionToast()
+                      }
                       className="size-8 text-primary bg-primary/10 hover:bg-primary/20 hover:scale-110 transition-all duration-200"
                     >
                       <Pencil className="size-3.5" />
@@ -439,7 +458,11 @@ export default function UserList() {
                     <Button
                       variant="ghost"
                       size="icon"
-                      onClick={() => handleDelete(row.original)}
+                      onClick={() =>
+                        canDelete
+                          ? handleDelete(row.original)
+                          : showPermissionToast()
+                      }
                       className="size-8 text-destructive bg-destructive/10 hover:bg-destructive/20 hover:scale-110 transition-all duration-200"
                     >
                       <Trash2 className="size-3.5" />

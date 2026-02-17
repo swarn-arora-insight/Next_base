@@ -35,6 +35,8 @@ import { FeatureListDialog } from "./modals/feature-list-dialog";
 import { Feature } from "@/interface/interface";
 import { RoleApiResponse, roleList, useDeleteRole, useEditRole } from "./api";
 import { toast } from "sonner";
+import { useSelector } from "react-redux";
+import { RootState } from "@/redux/store";
 
 type Role = {
   id: string;
@@ -58,7 +60,7 @@ export default function RolesList() {
   const { mutate: deleteRole, isPending: isDeleting } = useDeleteRole();
   const [selectedRoleForFeatures, setSelectedRoleForFeatures] =
     useState<Role | null>(null);
-
+  const features = useSelector((state: RootState) => state.feature.features);
   const mapApiRolesToUi = (data: RoleApiResponse[]): Role[] => {
     return data.map((role) => ({
       id: role.role_id,
@@ -67,13 +69,18 @@ export default function RolesList() {
       userNames: role.user_names || [],
     }));
   };
+  // const roles: Role[] = useMemo(() => {
+  //   return data ? mapApiRolesToUi(data) : [];
+  // }, [data]);
+
   const roles: Role[] = useMemo(() => {
-    return data ? mapApiRolesToUi(data) : [];
+    if (!Array.isArray(data)) return [];
+    return mapApiRolesToUi(data);
   }, [data]);
 
   const handleEdit = (role: Role) => {
     setEditingRole(role);
-    setEditRoleName(role.name);;
+    setEditRoleName(role.name);
     setIsEditDialogOpen(true);
   };
 
@@ -115,14 +122,11 @@ export default function RolesList() {
       },
     );
   };
-
-  // Handle feature list click
   const handleFeatureList = (role: Role) => {
     setSelectedRoleForFeatures(role);
     setIsFeatureListOpen(true);
   };
 
-  // Handle feature list save
   const handleFeatureListSave = (features: Feature[]) => {
     const mappedFeatures = features.map((f) => ({
       id: f.feature_id,
@@ -143,6 +147,18 @@ export default function RolesList() {
     if (joined.length <= maxLength) return joined;
     return joined.substring(0, maxLength) + "...";
   };
+
+  const uamPermission = features
+    ?.find((grp) => grp.feature_grp_name === "UAM")
+    ?.feature_list?.find(
+      (f) => f.feature_name === "Roles",
+    )?.permission_level;
+  const canEdit = uamPermission === 3 || uamPermission === 4;
+
+  const showPermissionToast = () => {
+    toast.error("You do not have permission to perform this action.");
+  };
+
   const columns: ColumnDef<Role>[] = useMemo(
     () => [
       {
@@ -213,7 +229,6 @@ export default function RolesList() {
             </span>
           ),
       },
-
       {
         id: "features",
         header: "Features",
@@ -237,7 +252,9 @@ export default function RolesList() {
             <Button
               variant="ghost"
               size="icon"
-              onClick={() => handleEdit(row.original)}
+              onClick={() =>
+                canEdit ? handleEdit(row.original) : showPermissionToast()
+              }
               className="size-8 text-primary bg-primary/10 hover:bg-primary/20 hover:scale-110 transition-all duration-200"
             >
               <Pencil className="size-4" />
@@ -474,7 +491,11 @@ export default function RolesList() {
                     <Button
                       variant="ghost"
                       size="icon"
-                      onClick={() => handleEdit(row.original)}
+                      onClick={() =>
+                        canEdit
+                          ? handleEdit(row.original)
+                          : showPermissionToast()
+                      }
                       className="size-8 text-primary bg-primary/10 hover:bg-primary/20 hover:scale-110 transition-all duration-200"
                     >
                       <Pencil className="size-3.5" />
@@ -508,7 +529,7 @@ export default function RolesList() {
         roleName={editRoleName}
         onRoleNameChange={setEditRoleName}
         onSave={handleEditSave}
-      /> 
+      />
 
       <DeleteConfirmationDialog
         open={isDeleteDialogOpen}
@@ -516,7 +537,7 @@ export default function RolesList() {
         title="Role"
         itemName={deletingRole?.name ?? ""}
         onConfirm={handleDeleteConfirm}
-      /> 
+      />
 
       <FeatureListDialog
         open={isFeatureListOpen}

@@ -26,6 +26,8 @@ import { DeleteConfirmationDialog } from "./modals/delete-confirmation-dialog";
 import { useOrgList, useDeleteOrg, useEditOrg } from "./api";
 import { EditOrganizationDialog } from "./modals/edit-dialog";
 import { toast } from "sonner";
+import { RootState } from "@/redux/store";
+import { useSelector } from "react-redux";
 
 type Organization = {
   org_id: string;
@@ -44,6 +46,7 @@ export default function OrganizationList() {
   const [editName, setEditName] = useState("");
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [deletingOrg, setDeletingOrg] = useState<Organization | null>(null);
+  const features = useSelector((state: RootState) => state.feature.features);
 
   const handleEdit = (org: Organization) => {
     setEditingOrg(org);
@@ -52,23 +55,23 @@ export default function OrganizationList() {
   };
 
   const handleEditSave = () => {
-  if (!editingOrg || !editName.trim()) return;
+    if (!editingOrg || !editName.trim()) return;
 
-  editOrgMutation.mutate(
-    {
-      org_id: editingOrg.org_id,
-      org_name: editName.trim(),
-    },
-    {
-      onSuccess: () => {
-        toast.success("Organization updated successfully");
-        setIsEditDialogOpen(false);
-        setEditingOrg(null);
-        setEditName("");
+    editOrgMutation.mutate(
+      {
+        org_id: editingOrg.org_id,
+        org_name: editName.trim(),
       },
-    }
-  );
-};
+      {
+        onSuccess: () => {
+          toast.success("Organization updated successfully");
+          setIsEditDialogOpen(false);
+          setEditingOrg(null);
+          setEditName("");
+        },
+      },
+    );
+  };
 
   const handleDelete = (org: Organization) => {
     setDeletingOrg(org);
@@ -90,6 +93,18 @@ export default function OrganizationList() {
         },
       },
     );
+  };
+
+  const uamPermission = features
+    ?.find((grp) => grp.feature_grp_name === "UAM")
+    ?.feature_list?.find(
+      (f) => f.feature_name === "Organizations",
+    )?.permission_level;
+  const canEdit = uamPermission === 3 || uamPermission === 4;
+  const canDelete = uamPermission === 4;
+
+  const showPermissionToast = () => {
+    toast.error("You do not have permission to perform this action.");
   };
 
   const columns: ColumnDef<Organization>[] = [
@@ -128,7 +143,9 @@ export default function OrganizationList() {
           <Button
             variant="ghost"
             size="icon"
-            onClick={() => handleEdit(row.original)}
+            onClick={() =>
+              canEdit ? handleEdit(row.original) : showPermissionToast()
+            }
             className="size-8 text-primary bg-primary/10 hover:bg-primary/20 hover:scale-110 transition-all duration-200"
           >
             <Pencil className="size-4" />
@@ -137,7 +154,9 @@ export default function OrganizationList() {
           <Button
             variant="ghost"
             size="icon"
-            onClick={() => handleDelete(row.original)}
+            onClick={() =>
+              canDelete ? handleDelete(row.original) : showPermissionToast()
+            }
             className="size-8 text-destructive bg-destructive/10 hover:bg-destructive/20 hover:scale-110 transition-all duration-200"
           >
             <Trash2 className="size-4" />
@@ -164,7 +183,7 @@ export default function OrganizationList() {
   });
 
   if (isLoading) return <div>Loading organizations...</div>;
-  
+
   if (error) return <div>Failed to load organizations</div>;
   return (
     <div className="space-y-4">
@@ -319,7 +338,11 @@ export default function OrganizationList() {
                     <Button
                       variant="ghost"
                       size="icon"
-                      onClick={() => handleEdit(row.original)}
+                      onClick={() =>
+                        canEdit
+                          ? handleEdit(row.original)
+                          : showPermissionToast()
+                      }
                       className="size-8 text-primary bg-primary/10 hover:bg-primary/20 hover:scale-110 transition-all duration-200"
                     >
                       <Pencil className="size-3.5" />
@@ -327,7 +350,11 @@ export default function OrganizationList() {
                     <Button
                       variant="ghost"
                       size="icon"
-                      onClick={() => handleDelete(row.original)}
+                      onClick={() =>
+                        canDelete
+                          ? handleDelete(row.original)
+                          : showPermissionToast()
+                      }
                       className="size-8 text-destructive bg-destructive/10 hover:bg-destructive/20 hover:scale-110 transition-all duration-200"
                     >
                       <Trash2 className="size-3.5" />
