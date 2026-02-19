@@ -1,6 +1,6 @@
 "use client";
 
-import React from "react";
+import React, { useEffect } from "react";
 
 import { useState } from "react";
 import {
@@ -22,9 +22,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Users, Eye, EyeOff } from "lucide-react";
-import { roleList, useCreateUser, useOrgList} from "../api";
-import { useSelector } from "react-redux";
-import { RootState } from "@/redux/store";
+import { roleList, useCreateUser, useOrgList } from "../api";
 import { toast } from "sonner";
 
 interface AddUserDialogProps {
@@ -59,7 +57,7 @@ export function AddUserDialog({ open, onOpenChange }: AddUserDialogProps) {
   const { data: orgData } = useOrgList();
   const roles = Array.isArray(roleData) ? roleData : [];
   const organizations = Array.isArray(orgData) ? orgData : [];
- 
+
   const validatePassword = (pwd: string): string | undefined => {
     if (!pwd) return "Password is required";
     if (pwd.length < 8) return "Password must be at least 8 characters";
@@ -179,7 +177,16 @@ export function AddUserDialog({ open, onOpenChange }: AddUserDialogProps) {
         password,
       },
       {
-        onSuccess: () => {
+        onSuccess: (response) => {
+          console.log(response);
+          if (response.header.code !== 200) {
+            toast.warning(
+              response?.header.message ||
+                response?.response?.message ||
+                "Something went wrong",
+            );
+            return;
+          }
           toast.success("User Created successfully");
           resetForm();
           onOpenChange(false);
@@ -200,6 +207,11 @@ export function AddUserDialog({ open, onOpenChange }: AddUserDialogProps) {
     setTouched(false);
     setFieldTouched({});
   };
+  useEffect(() => {
+    if (open) {
+      resetForm();
+    }
+  }, [open]);
   const RequiredStar = () => <span className="text-destructive ml-0.5">*</span>;
 
   return (
@@ -218,8 +230,7 @@ export function AddUserDialog({ open, onOpenChange }: AddUserDialogProps) {
             </div>
           </div>
         </DialogHeader>
-        <form onSubmit={handleSubmit} className="mt-4"
-          autoComplete="off">
+        <form onSubmit={handleSubmit} className="mt-4" autoComplete="off">
           <div className="space-y-4">
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">

@@ -77,7 +77,6 @@ export default function OrganizationList() {
     setDeletingOrg(org);
     setIsDeleteDialogOpen(true);
   };
-
   const handleDeleteConfirm = () => {
     if (!deletingOrg) return;
 
@@ -86,10 +85,23 @@ export default function OrganizationList() {
         org_id: deletingOrg.org_id,
       },
       {
-        onSuccess: () => {
+        onSuccess: (response) => {
+          if (response.header.code !== 200) {
+            toast.warning(
+              response?.header.message ||
+                response?.response?.message ||
+                "Something went wrong",
+            );
+            return;
+          }
+
           toast.success("Organization deleted successfully");
           setIsDeleteDialogOpen(false);
           setDeletingOrg(null);
+        },
+
+        onError: () => {
+          toast.error("Something went wrong");
         },
       },
     );

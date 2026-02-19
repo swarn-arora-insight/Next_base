@@ -17,6 +17,7 @@ import {
 } from "@/components/ui/accordion";
 import { Feature } from "@/interface/interface";
 import { useAssingFeature, useFeatureList } from "../api";
+import { toast } from "sonner";
 
 type FeatureListDialogProps = {
   open: boolean;
@@ -24,6 +25,7 @@ type FeatureListDialogProps = {
   roleName: string;
   onSave: (features: Feature[]) => void;
   roleId: string;
+  canEdit: boolean
 };
 
 /* ---------- Access Levels ---------- */
@@ -65,6 +67,7 @@ export function FeatureListDialog({
   roleName,
   onSave,
   roleId,
+  canEdit
 }: FeatureListDialogProps) {
   const { data, isLoading, isError } = useFeatureList(roleId, open);
 
@@ -119,6 +122,10 @@ export function FeatureListDialog({
   };
 
   const handleSave = () => {
+    if (!canEdit) {
+    toast.error("You do not have permission to perform this action.");
+    return; // stop save
+  }
     const payload = {
       features: Object.entries(features).flatMap(([_, items]) =>
         items.map((f) => ({
@@ -131,6 +138,7 @@ export function FeatureListDialog({
 
     assignFeature(payload, {
       onSuccess: () => {
+        toast.success("Feature assigned successfull")
         onOpenChange(false);
       },
     });
@@ -210,9 +218,6 @@ export function FeatureListDialog({
         </div>
 
         <DialogFooter>
-          <Button variant="outline" onClick={() => onOpenChange(false)}>
-            Cancel
-          </Button>
           <Button onClick={handleSave} disabled={isPending}>
             {isPending ? "Saving..." : "Save Changes"}
           </Button>

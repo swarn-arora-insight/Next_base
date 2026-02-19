@@ -1,6 +1,6 @@
 "use client";
 
-import React from "react";
+import React, { useEffect } from "react";
 
 import { useState } from "react";
 import {
@@ -79,7 +79,16 @@ export function AddRoleDialog({ open, onOpenChange }: AddRoleDialogProps) {
         role_name: roleName,
       },
       {
-        onSuccess: () => {
+        onSuccess: (response) => {
+          console.log(response);
+          if (response.header.code !== 200) {
+            toast.warning(
+              response?.header.message ||
+                response?.response?.message ||
+                "Something went wrong",
+            );
+            return;
+          }
           toast.success("Role created successfully");
           resetForm();
           onOpenChange(false);
@@ -94,6 +103,11 @@ export function AddRoleDialog({ open, onOpenChange }: AddRoleDialogProps) {
     setFieldTouched({});
   };
 
+  useEffect(() => {
+    if (open) {
+      resetForm();
+    }
+  }, [open]);
 
   const showError = (field: string) =>
     (touched || fieldTouched[field]) && errors[field as keyof FormErrors];

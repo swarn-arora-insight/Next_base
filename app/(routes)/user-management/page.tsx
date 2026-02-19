@@ -14,20 +14,14 @@ import Organization from "./component/Organization";
 import { useTabsList } from "./component/api";
 import { RootState } from "@/redux/store";
 import { useSelector } from "react-redux";
-
-interface TabItem {
-  tab_name: string;
-  access: number;
-  add_button: string;
-  icon: IconKey;
-}
+import { toast } from "sonner";
+import { TabItem } from "@/interface/interface";
 
 const iconMap: Record<string, LucideIcon> = {
   Building2,
   Shield,
   Users,
 };
-type IconKey = "Building2" | "Shield" | "Users";
 
 export default function UserManagement() {
   const { data: tabsList = [], isLoading } = useTabsList();
@@ -36,10 +30,12 @@ export default function UserManagement() {
   const [isUserDialogOpen, setIsUserDialogOpen] = useState(false);
   const features = useSelector((state: RootState) => state.feature.features);
   const uamPermissions = useMemo(() => {
-    const uamGroup = features?.find((grp) => grp.feature_grp_name === "UAM");
+    if (!Array.isArray(features)) return {};
+    const uamGroup = features.find((grp) => grp.feature_grp_name === "UAM");
     const list = uamGroup?.feature_list ?? [];
     return list.reduce<Record<string, number>>((acc, feature) => {
-      acc[feature.feature_name.toLowerCase()] = feature.permission_level;
+      if (!feature?.feature_name) return acc;
+      acc[feature.feature_name.toLowerCase()] = feature.permission_level ?? 0;
       return acc;
     }, {});
   }, [features]);
@@ -81,7 +77,12 @@ export default function UserManagement() {
 
   const handleAddClick = (tabName: string) => {
     const name = tabName.toLowerCase().trim();
+    const permission = uamPermissions[name];
 
+    if (![3, 4].includes(permission)) {
+      toast.error("You do not have permission to perform this action.");
+      return;
+    }
     if (name.includes("org")) {
       setIsOrgDialogOpen(true);
     } else if (name.includes("role")) {

@@ -15,5 +15,8 @@ export const getToken = () => {
 export const setApiToken = (token: string) => localStorage.setItem("apiToken", token);
 export const getApiToken = () => localStorage.getItem("apiToken");
 export const clearSession = () => {
+  const theme = localStorage.getItem("theme");
   localStorage.clear();
+  if (theme) localStorage.setItem("theme", theme);
 };
+

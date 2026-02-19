@@ -1,6 +1,6 @@
 "use client";
 
-import React from "react";
+import React, { useEffect } from "react";
 
 import { useState } from "react";
 import {
@@ -61,7 +61,16 @@ export function AddOrganizationDialog({
         org_name: orgName.trim(),
       },
       {
-        onSuccess: () => {
+        onSuccess: (response) => {
+          console.log(response)
+          if (response.header.code !== 200) {
+                    toast.warning(
+                      response?.header.message ||
+                        response?.response?.message ||
+                        "Something went wrong",
+                    );
+                    return;
+                  }
           toast.success("Organization created successfully");
           resetForm();
           onOpenChange(false);
@@ -76,6 +85,12 @@ export function AddOrganizationDialog({
     setTouched(false);
     setFieldTouched(false);
   };
+
+  useEffect(() => {
+  if (open) {
+    resetForm();
+  }
+}, [open]);
 
   const showError = (touched || fieldTouched) && error;
 

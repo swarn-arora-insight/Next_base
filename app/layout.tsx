@@ -43,7 +43,7 @@ export default function RootLayout({
               disableTransitionOnChange
             >
               {children}
-              <Toaster position="top-right" richColors duration={2000} />
+              <Toaster position="top-right" richColors duration={3000} />
             </ThemeProvider>
             {/* </PersistProviders> */}
           </ReduxProviders>

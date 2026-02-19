@@ -1,19 +1,24 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { apiRequest } from "@/services/apirequest";
 import { toast } from "sonner";
+import {
+  CreateOrgPayload,
+  DeleteOrgPayload,
+  EditOrgPayload,
+} from "@/interface/interface";
 
-interface CreateOrgPayload {
-  org_name: string;
-}
+// interface CreateOrgPayload {
+//   org_name: string;
+// }
 
-interface EditOrgPayload {
-  org_id: string;
-  org_name: string;
-}
+// interface EditOrgPayload {
+//   org_id: string;
+//   org_name: string;
+// }
 
-interface DeleteOrgPayload {
-  org_id: string;
-}
+// interface DeleteOrgPayload {
+//   org_id: string;
+// }
 
 interface CreateRolePayload {
   role_name: string;
@@ -60,11 +65,11 @@ interface EditRolePayload {
 }
 
 interface EditUserPayload {
-user_id: string,
-first_name: string,
-last_name: string,
-org_id: string,
-role_id: string
+  user_id: string;
+  first_name: string;
+  last_name: string;
+  org_id: string;
+  role_id: string;
 }
 
 interface AssignFeaturePayload {
@@ -78,7 +83,7 @@ interface AssignFeaturePayload {
 export interface ApiFeature {
   feature_id: string;
   feature_name: string;
-  permission_level: number
+  permission_level: number;
 }
 
 export interface ApiFeatureGroup {
@@ -89,14 +94,10 @@ export interface ApiFeatureGroup {
 
 const handleApiError = (error: any) => {
   const message =
-    error?.response?.data?.header?.message ||
-    error?.response?.data?.message ||
-    error?.message ||
-    "Something went wrong!";
+    error?.response?.data?.message || error?.message || "Something went wrong!";
 
   toast.error(message);
 };
-
 
 export const useTabsList = () => {
   return useQuery({
@@ -111,12 +112,15 @@ export const useTabsList = () => {
   });
 };
 
-export const useOrgList  = () => {
+export const useOrgList = () => {
   return useQuery({
     queryKey: ["useOrgList"],
     queryFn: async () => {
       const response = await apiRequest("post", "/uam/getorgs", {});
       const resData = response.data;
+      // if (resData.code !== 200) {
+      //   toast.warning(resData.header.message || "Something went wrong");
+      // }
       return resData.response;
     },
     refetchOnWindowFocus: false,
@@ -130,12 +134,15 @@ export const useCreateOrg = () => {
     mutationFn: async (payload: CreateOrgPayload) => {
       const response = await apiRequest("post", "/uam/createorg", payload);
       const resData = response.data;
-      return resData.response;
+      return resData;
     },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["useOrgList"] });
-    },
-    onError: handleApiError,
+    onSuccess: (data) => {
+      if (data.code === 200) {
+        queryClient.invalidateQueries({
+          queryKey: ["useOrgList"],
+        });
+      }
+    }
   });
 };
 
@@ -156,16 +163,21 @@ export const useEditOrg = () => {
 
 export const useDeleteOrg = () => {
   const queryClient = useQueryClient();
+
   return useMutation({
     mutationFn: async (payload: DeleteOrgPayload) => {
       const response = await apiRequest("post", "/uam/deleteorg", payload);
       const resData = response.data;
-      return resData.response;
+      return resData;
     },
-      onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["useOrgList"] });
+
+    onSuccess: (data) => {
+      if (data.code === 200) {
+        queryClient.invalidateQueries({
+          queryKey: ["useOrgList"],
+        });
+      }
     },
-    onError: handleApiError,
   });
 };
 
@@ -187,13 +199,17 @@ export const useCreateRole = () => {
   return useMutation({
     mutationFn: async (payload: CreateRolePayload) => {
       const response = await apiRequest("post", "/uam/createrole", payload);
-       const resData = response.data;
-      return resData.response;
+      const resData = response.data;
+      return resData;
     },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["roleList"] });
-    },
-    onError: handleApiError,
+    onSuccess: (data) => {
+      if (data.code === 200) {
+        queryClient.invalidateQueries({
+          queryKey: ["roleList"],
+        });
+      }
+    }
+  
   });
 };
 
@@ -202,13 +218,16 @@ export const useEditRole = () => {
   return useMutation({
     mutationFn: async (payload: EditRolePayload) => {
       const response = await apiRequest("post", "/uam/editrole", payload);
-       const resData = response.data;
-      return resData.response;
+      const resData = response.data;
+      return resData;
     },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["roleList"] });
-    },
-    onError: handleApiError,
+    onSuccess: (data) => {
+      if (data.code === 200) {
+        queryClient.invalidateQueries({
+          queryKey: ["roleList"],
+        });
+      }
+    }
   });
 };
 
@@ -245,18 +264,17 @@ export const useCreateUser = () => {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: async (payload: CreateUserPayload) => {
-      const response = await apiRequest(
-        "post",
-        "/users/createuser",
-        payload,
-      );
+      const response = await apiRequest("post", "/users/createuser", payload);
       const resData = response.data;
-      return resData.response;
+      return resData;
     },
-     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["usersList"] });
-    },
-    onError: handleApiError,
+    onSuccess: (data) => {
+      if (data.code === 200) {
+        queryClient.invalidateQueries({
+          queryKey: ["usersList"],
+        });
+      }
+    }
   });
 };
 
@@ -265,13 +283,16 @@ export const useEditUser = () => {
   return useMutation({
     mutationFn: async (payload: EditUserPayload) => {
       const response = await apiRequest("post", "/uam/edituser", payload);
-       const resData = response.data;
-      return resData.response;
+      const resData = response.data;
+      return resData;
     },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["usersList"] });
-    },
-    onError: handleApiError,
+    onSuccess: (data) => {
+      if (data.code === 200) {
+        queryClient.invalidateQueries({
+          queryKey: ["usersList"],
+        });
+      }
+    }
   });
 };
 
@@ -291,10 +312,7 @@ export const useDeleteUser = () => {
   });
 };
 
-export const useFeatureList = (
-  roleId: string,
-  enabled: boolean,
-) => {
+export const useFeatureList = (roleId: string, enabled: boolean) => {
   return useQuery<ApiFeatureGroup[]>({
     queryKey: ["featureList", roleId],
     queryFn: async () => {
@@ -303,12 +321,11 @@ export const useFeatureList = (
       });
       return response.data.response;
     },
-    enabled: enabled && !!roleId, 
+    enabled: enabled && !!roleId,
     refetchOnWindowFocus: false,
     retry: 1,
   });
 };
-
 
 export const useAssingFeature = () => {
   const queryClient = useQueryClient();
@@ -325,4 +342,3 @@ export const useAssingFeature = () => {
     onError: handleApiError,
   });
 };
-

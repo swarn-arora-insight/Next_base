@@ -1,5 +1,3 @@
-// store/slices/featureSlice.ts
-
 import { ApiFeatureGroup } from "@/app/(routes)/user-management/component/api";
 import { createSlice, PayloadAction } from "@reduxjs/toolkit";
 

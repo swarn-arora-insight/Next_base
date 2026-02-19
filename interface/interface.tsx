@@ -1,10 +1,10 @@
-import { LucideIcon } from "lucide-react";
+export type IconKey = "Building2" | "Shield" | "Users";
 
 export interface TabItem {
   tab_name: string;
   access: number;
   add_button: string;
-  icon: LucideIcon;
+  icon: IconKey;
 }
 
 export type Feature = {
@@ -13,3 +13,16 @@ export type Feature = {
   access: number;
   group_id: string;
 };
+
+export interface CreateOrgPayload {
+  org_name: string;
+}
+
+export interface EditOrgPayload {
+  org_id: string;
+  org_name: string;
+}
+
+export interface DeleteOrgPayload {
+  org_id: string;
+}

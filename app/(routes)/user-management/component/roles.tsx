@@ -93,7 +93,15 @@ export default function RolesList() {
         role_name: editRoleName.trim(),
       },
       {
-        onSuccess: () => {
+        onSuccess: (response) => {
+          if (response.header.code !== 200) {
+            toast.warning(
+              response?.header.message ||
+                response?.response?.message ||
+                "Something went wrong",
+            );
+            return;
+          }
           setIsEditDialogOpen(false);
           setEditingRole(null);
           setEditRoleName("");
@@ -150,11 +158,9 @@ export default function RolesList() {
 
   const uamPermission = features
     ?.find((grp) => grp.feature_grp_name === "UAM")
-    ?.feature_list?.find(
-      (f) => f.feature_name === "Roles",
-    )?.permission_level;
+    ?.feature_list?.find((f) => f.feature_name === "Roles")?.permission_level;
   const canEdit = uamPermission === 3 || uamPermission === 4;
-
+  const canDelete = uamPermission === 4;
   const showPermissionToast = () => {
     toast.error("You do not have permission to perform this action.");
   };
@@ -263,7 +269,9 @@ export default function RolesList() {
               <Button
                 variant="ghost"
                 size="icon"
-                onClick={() => handleDelete(row.original)}
+                onClick={() =>
+                  canDelete ? handleDelete(row.original) : showPermissionToast()
+                }
                 className="size-8 text-destructive bg-destructive/10 hover:bg-destructive/20 hover:scale-110 transition-all duration-200"
               >
                 <Trash2 className="size-4" />
@@ -504,7 +512,11 @@ export default function RolesList() {
                       <Button
                         variant="ghost"
                         size="icon"
-                        onClick={() => handleDelete(row.original)}
+                        onClick={() =>
+                          canDelete
+                            ? handleDelete(row.original)
+                            : showPermissionToast()
+                        }
                         className="size-8 text-destructive bg-destructive/10 hover:bg-destructive/20 hover:scale-110 transition-all duration-200"
                       >
                         <Trash2 className="size-3.5" />
@@ -545,6 +557,7 @@ export default function RolesList() {
         roleName={selectedRoleForFeatures?.name ?? ""}
         onSave={handleFeatureListSave}
         roleId={selectedRoleForFeatures?.id ?? ""}
+        canEdit={canEdit}
       />
     </div>
   );

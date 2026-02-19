@@ -45,9 +45,6 @@ export function DeleteConfirmationDialog({
                     </div>
                 </div>
                 <DialogFooter className="gap-2">
-                    <Button variant="outline" onClick={() => onOpenChange(false)}>
-                        Cancel
-                    </Button>
                     <Button variant="destructive" onClick={onConfirm}>
                         Delete
                     </Button>

@@ -108,7 +108,16 @@ export default function UserList() {
         role_id: editRoleId,
       },
       {
-        onSuccess: () => {
+        onSuccess: (response) => {
+          console.log(response)
+          if (response.header.code !== 200) {
+                    toast.warning(
+                      response?.header.message ||
+                        response?.response?.message ||
+                        "Something went wrong",
+                    );
+                    return;
+                  }
           toast.success("User updated successfully");
           setIsEditDialogOpen(false);
           setEditingUser(null);

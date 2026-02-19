@@ -38,16 +38,21 @@ export default function Header() {
     router.push("/login");
   };
 
-  const hideUserManagement = useMemo(() => {
-    const uamGroup = features?.find((grp) => grp.feature_grp_name === "UAM");
+ const hideUserManagement = useMemo(() => {
+  if (!Array.isArray(features)) return false;
 
-    const featureList = uamGroup?.feature_list ?? [];
+  const uamGroup = features.find(
+    (grp) => grp.feature_grp_name === "UAM"
+  );
 
-    return (
-      featureList.length > 0 &&
-      featureList.every((feature) => feature.permission_level === 1)
-    );
-  }, [features]);
+  const featureList = uamGroup?.feature_list ?? [];
+
+  return (
+    featureList.length > 0 &&
+    featureList.every((feature) => feature.permission_level === 1)
+  );
+}, [features]);
+
 
   return (
     <header
