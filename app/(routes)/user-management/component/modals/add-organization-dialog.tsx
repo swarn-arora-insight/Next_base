@@ -17,6 +17,7 @@ import { Label } from "@/components/ui/label";
 import { Building2 } from "lucide-react";
 import { useCreateOrg } from "../api";
 import { toast } from "sonner";
+import { queryClient } from "@/providers/query-provider";
 
 interface AddOrganizationDialogProps {
   open: boolean;
@@ -62,16 +63,19 @@ export function AddOrganizationDialog({
       },
       {
         onSuccess: (response) => {
-          console.log(response)
+          console.log(response);
           if (response.header.code !== 200) {
-                    toast.warning(
-                      response?.header.message ||
-                        response?.response?.message ||
-                        "Something went wrong",
-                    );
-                    return;
-                  }
+            toast.warning(
+              response?.header.message ||
+                response?.response?.message ||
+                "Something went wrong",
+            );
+            return;
+          }
           toast.success("Organization created successfully");
+           queryClient.invalidateQueries({
+          queryKey: ["useOrgList"],
+        });
           resetForm();
           onOpenChange(false);
         },
@@ -87,10 +91,10 @@ export function AddOrganizationDialog({
   };
 
   useEffect(() => {
-  if (open) {
-    resetForm();
-  }
-}, [open]);
+    if (open) {
+      resetForm();
+    }
+  }, [open]);
 
   const showError = (touched || fieldTouched) && error;
 

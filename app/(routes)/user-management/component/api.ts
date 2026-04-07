@@ -129,19 +129,11 @@ export const useOrgList = () => {
 };
 
 export const useCreateOrg = () => {
-  const queryClient = useQueryClient();
   return useMutation({
     mutationFn: async (payload: CreateOrgPayload) => {
       const response = await apiRequest("post", "/uam/createorg", payload);
       const resData = response.data;
       return resData;
-    },
-    onSuccess: (data) => {
-      if (data.code === 200) {
-        queryClient.invalidateQueries({
-          queryKey: ["useOrgList"],
-        });
-      }
     }
   });
 };

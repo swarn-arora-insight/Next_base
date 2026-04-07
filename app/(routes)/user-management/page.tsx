@@ -24,11 +24,13 @@ const iconMap: Record<string, LucideIcon> = {
 };
 
 export default function UserManagement() {
-  const { data: tabsList = [], isLoading } = useTabsList();
   const [isOrgDialogOpen, setIsOrgDialogOpen] = useState(false);
   const [isRoleDialogOpen, setIsRoleDialogOpen] = useState(false);
   const [isUserDialogOpen, setIsUserDialogOpen] = useState(false);
   const features = useSelector((state: RootState) => state.feature.features);
+  const { data, isLoading } = useTabsList();
+  const tabsList = Array.isArray(data) ? data : (data?.data ?? []);
+
   const uamPermissions = useMemo(() => {
     if (!Array.isArray(features)) return {};
     const uamGroup = features.find((grp) => grp.feature_grp_name === "UAM");
