@@ -3,9 +3,9 @@ import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import { QueryProvider } from "@/providers/query-provider";
 import { ReduxProviders } from "@/providers/redux-provider";
-import { PersistProviders } from "@/providers/presist-provider";
 import { ThemeProvider } from "@/providers/theme-provider";
-// import { PostHogProvider } from "@/provider/PostHogProvider";
+import { Toaster } from "sonner";
+import { PersistProviders } from "@/providers/presist-provider";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -35,16 +35,17 @@ export default function RootLayout({
       >
         <QueryProvider>
           <ReduxProviders>
-            <PersistProviders>
-                <ThemeProvider
-                  attribute="class"
-                  defaultTheme="system"
-                  enableSystem
-                  disableTransitionOnChange
-                >
-                  {children}
-                </ThemeProvider>
-            </PersistProviders>
+            {/* <PersistProviders> */}
+            <ThemeProvider
+              attribute="class"
+              defaultTheme="system"
+              enableSystem
+              disableTransitionOnChange
+            >
+              {children}
+              <Toaster position="top-right" richColors duration={3000} />
+            </ThemeProvider>
+            {/* </PersistProviders> */}
           </ReduxProviders>
         </QueryProvider>
       </body>

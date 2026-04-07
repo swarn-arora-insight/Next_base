@@ -1,4 +1,8 @@
+"use client";
+
 import Header from "@/components/global/header/page";
+import AuthGuard from "../guard/auth.guard";
+import { PersistProviders } from "@/providers/presist-provider";
 
 interface MarketingLayoutProps {
   children: React.ReactNode;
@@ -6,9 +10,13 @@ interface MarketingLayoutProps {
 
 export default function Layout({ children }: MarketingLayoutProps) {
   return (
-    <main className="h-screen">
-        <Header/>
-      {children}
-    </main>
+    <AuthGuard>
+      <PersistProviders>
+        <main className="h-screen">
+          <Header />
+          {children}
+        </main>
+      </PersistProviders>
+    </AuthGuard>
   );
 }

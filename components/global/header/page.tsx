@@ -1,146 +1,131 @@
 "use client";
-import { useEffect, useState } from "react";
+
+import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
-import Logo from "@/components/logo";
-import Menu from "@/components/menu";
-import { ModeToggle } from "@/components/toggleMode";
-import { Button, buttonVariants } from "@/components/ui/button";
-import { cn } from "@/lib/utils";
-import {
-  Sheet,
-  SheetContent,
-  SheetHeader,
-  SheetTitle,
-  SheetTrigger,
-} from "@/components/ui/sheet";
-import { Menu as MenuIcon, Palette } from "lucide-react";
-import { ThemeCustomizer } from "../custom-theme/page";
 import { useRouter } from "next/navigation";
+import { useSelector } from "react-redux";
+
+import Logo from "@/components/logo";
+import { ModeToggle } from "@/components/toggleMode";
+import { Button } from "@/components/ui/button";
+import { cn } from "@/lib/utils";
+import { Home, LogOut, User, Users } from "lucide-react";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { clearSession } from "@/utils/storage";
+
+import type { RootState } from "@/redux/store";
 
 export default function Header() {
   const [addBorder, setAddBorder] = useState(false);
-  const [isThemeOpen, setIsThemeOpen] = useState(false);
+  const user = useSelector((state: RootState) => state.auth.user);
+  const firstLetter = user?.firstname?.charAt(0).toUpperCase();
+  const features = useSelector((state: RootState) => state.feature.features);
   const router = useRouter();
+
   useEffect(() => {
-    const handleScroll = () => {
-      setAddBorder(window.scrollY > 20);
-    };
+    const handleScroll = () => setAddBorder(window.scrollY > 20);
     window.addEventListener("scroll", handleScroll);
     return () => window.removeEventListener("scroll", handleScroll);
   }, []);
 
   const logOut = () => {
-    document.cookie = "auth=; path=/; max-age=0";
+    clearSession();
     router.push("/login");
   };
 
-  return (
-    <>
-      <header
-        className={cn(
-          "sticky top-0 z-50 py-2 bg-gray-200/80 dark:bg-gray-800/80 backdrop-blur-md shadow-sm"
-        )}
-      >
-        <div className="container mx-auto px-4 flex justify-between items-center">
-          {/* Logo */}
-          <Link
-            href="/"
-            className="relative flex items-center space-x-2"
-            title="brand-logo"
-          >
-            <Logo className="w-auto h-4 dark:invert" />
-            <span className="font-bold text-xl">Template</span>
-          </Link>
+ const hideUserManagement = useMemo(() => {
+  if (!Array.isArray(features)) return false;
 
-          {/* Desktop Menu */}
-          <div className="hidden lg:flex items-center gap-6">
-            <nav>
-              <Menu />
-            </nav>
-
-            <div className="flex items-center gap-3">
-              <Button
-                onClick={() => setIsThemeOpen(true)}
-                variant="default"
-                size="sm"
-                className="bg-primary/80 text-white border border-gray-300/40"
-              >
-                <Palette className="h-4 w-4 mr-1" />
-                Customize Theme
-              </Button>
-
-              <Button
-                onClick={() => router.push("/user-management")} 
-                variant="default"
-                size="sm"
-                className="bg-primary/80 border-gray-300/40 text-white"
-              >
-                User
-              </Button>
-
-              <ModeToggle />
-              <Button
-                variant="default"
-                size="sm"
-                className="bg-primary/80 text-white border border-gray-300/40"
-                onClick={logOut}
-              >
-                Logout
-              </Button>
-            </div>
-          </div>
-
-          {/* Mobile Menu Button */}
-          <div className="lg:hidden">
-            <MobileNav />
-          </div>
-        </div>
-
-        {/* Scroll Border */}
-        <hr
-          className={cn(
-            "absolute w-full bottom-0 transition-opacity duration-300 ease-in-out",
-            addBorder ? "opacity-100" : "opacity-0"
-          )}
-        />
-      </header>
-      <ThemeCustomizer isOpen={isThemeOpen} onOpenChange={setIsThemeOpen} />
-    </>
+  const uamGroup = features.find(
+    (grp) => grp.feature_grp_name === "UAM"
   );
-}
 
-function MobileNav() {
+  const featureList = uamGroup?.feature_list ?? [];
+
   return (
-    <Sheet>
-      <SheetTrigger>
-        <MenuIcon className="w-6 h-6 cursor-pointer" />
-      </SheetTrigger>
-      <SheetContent side="right" className="p-6 space-y-6">
-        <SheetHeader>
-          <SheetTitle className="text-left text-xl">Menu</SheetTitle>
-        </SheetHeader>
+    featureList.length > 0 &&
+    featureList.every((feature) => feature.permission_level === 1)
+  );
+}, [features]);
 
-        {/* Logo inside mobile drawer */}
-        <div className="flex items-center space-x-2 mb-2">
-          <Logo className="h-5 dark:invert" />
-          <span className="font-bold">Template</span>
-        </div>
 
-        {/* Mobile nav items */}
-        <div className="space-y-4">{/* <Menu mobile /> */}</div>
+  return (
+    <header
+      className={cn(
+        "sticky top-0 z-50 py-2 bg-gray-200/80 dark:bg-gray-800/80 backdrop-blur-md shadow-sm",
+      )}
+    >
+      <div className="mx-auto px-4 flex justify-between items-center">
+        <Link
+          href="/dashboard"
+          className="relative flex items-center space-x-2"
+          title="brand-logo"
+        >
+          <Logo className="w-auto dark:invert" />
+          <span className="font-bold text-xl">Nextbase</span>
+        </Link>
 
-        {/* Theme + Login */}
-        <div className="pt-6 space-y-4">
+        <div className="flex items-center gap-2">
+          {!hideUserManagement && (
+            <Button
+              variant="default"
+              size="sm"
+              title="User management"
+              onClick={() => router.push("/user-management")}
+              className="bg-primary hover:bg-primary/80 cursor-pointer text-text"
+            >
+              <Users className="h-4 w-4" />
+            </Button>
+          )}
+
+          <Button
+            variant="default"
+            size="sm"
+            title="Dashboard"
+            onClick={() => router.push("/dashboard")}
+            className="bg-primary hover:bg-primary/80 cursor-pointer text-text"
+          >
+            <Home className="h-4 w-4" />
+          </Button>
+
           <ModeToggle />
 
-          <Link
-            href="/login"
-            className={cn(buttonVariants({ variant: "outline" }), "w-full")}
-          >
-            LogOut
-          </Link>
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button
+                variant="default"
+                size="sm"
+                title="User profile"
+                className="bg-primary hover:bg-primary/80 cursor-pointer text-text"
+              >
+                {firstLetter ?? <User className="h-4 w-4" />}
+              </Button>
+            </DropdownMenuTrigger>
+
+            <DropdownMenuContent align="end">
+              <DropdownMenuItem
+                onClick={logOut}
+                className="cursor-pointer flex items-center gap-2"
+              >
+                <LogOut />
+                Logout
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
         </div>
-      </SheetContent>
-    </Sheet>
+      </div>
+
+      <hr
+        className={cn(
+          "absolute w-full bottom-0 transition-opacity duration-300 ease-in-out",
+          addBorder ? "opacity-100" : "opacity-0",
+        )}
+      />
+    </header>
   );
 }

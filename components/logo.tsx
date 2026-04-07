@@ -1,20 +1,15 @@
-import { cn } from "@/lib/utils";
-import Image from "next/image";
-import React from "react";
 
-interface Logo {
-    className?: string
+interface LogoProps {
+  className?: string;
 }
 
-const Logo = ({className}:Logo) => {
+const Logo = ({ className }: LogoProps) => {
   return (
-    <Image
-      className={cn(className)}
-      src="/next.svg"
-      alt="Next.js logo"
-      width={24}
-      height={24}
-      priority
+    <img
+      src="/logo.png"
+      alt="Logo"
+      width={40}
+      height={40}
     />
   );
 };

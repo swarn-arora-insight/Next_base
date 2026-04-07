@@ -1,116 +1,164 @@
 "use client";
-import Link from "next/link";
+
+import Image from "next/image";
+import { useRouter } from "next/navigation";
 import { useState } from "react";
+import { useForm } from "react-hook-form";
 import { Button } from "@/components/ui/button";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Icons } from "@/components/icons";
-import { signIn } from "@/auth";
-import { useRouter } from "next/navigation";
+import { Eye, EyeOff, LogIn, Loader2 } from "lucide-react";
+import { loginApi } from "../api";
+import { toast } from "sonner";
+import { useDispatch } from "react-redux";
+import { setApiToken, setUser } from "@/redux/authSlice";
+
+type LoginFormValues = {
+  email: string;
+  password: string;
+};
 
 export default function LoginForm() {
   const router = useRouter();
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
-  const [errorMsg, setErrorMsg] = useState("");
+  const dispatch = useDispatch();
+  const [showPassword, setShowPassword] = useState(false);
+  const {
+    register,
+    handleSubmit,
+    formState: { errors, isSubmitting },
+    setError,
+  } = useForm<LoginFormValues>();
 
-  const VALID_EMAIL = "amit123@gmail.com";
-  const VALID_PASSWORD = "amit123";
+  const onSubmit = async (data: LoginFormValues) => {
+    try {
+      const res = await loginApi(data);
 
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (email === VALID_EMAIL && password === VALID_PASSWORD) {
-      document.cookie = "auth=true; path=/";
+      dispatch(
+        setUser({
+          firstname: res.firstName,
+          lastname: res.lastName,
+        })
+      );
+
+      if (res.token) {
+        dispatch(setApiToken(res.token));
+      }
+
+      toast.success("Login successful");
       router.push("/dashboard");
-    } else {
-      setErrorMsg("Invalid email or password. Please try again.");
+    } catch {
+      setError("root", {
+        message: "Invalid email or password",
+      });
     }
   };
 
   return (
     <div className="min-h-screen flex items-center justify-center">
       <Card className="mx-auto max-w-lg sm:min-w-sm">
-        <CardHeader>
-          <CardTitle className="text-2xl text-center  ">Login</CardTitle>
-          <CardDescription>
-            Enter your email below to login to your account
-          </CardDescription>
+        <CardHeader className="flex flex-col items-center gap-1">
+          <Image src="/logo.png" alt="Logo" width={48} height={48} />
+          <CardTitle className="text-2xl text-center font-semibold">
+            Nextbase
+          </CardTitle>
+          <p className="text-lg text-center font-semibold text-muted-foreground">
+            Login
+          </p>
         </CardHeader>
+
         <CardContent>
-          <form onSubmit={handleSubmit} className="grid gap-4">
-            <Button
-              variant="outline"
-              className="w-full"
-              onClick={() => signIn("google")}
-            >
-              <Icons.google className="w-4 h-4 mr-2" />
-              Login with Google
-            </Button>
+          <form onSubmit={handleSubmit(onSubmit)} className="grid gap-4">
 
-            <div className="relative">
-              <div className="absolute inset-0 flex items-center">
-                <span className="w-full border-t" />
-              </div>
-              <div className="relative flex justify-center text-xs uppercase">
-                <span className="bg-background px-2 text-muted-foreground">
-                  Or continue with
-                </span>
-              </div>
-            </div>
+            {/* Email */}
+            <div className="grid gap-1">
+              <Label className="mb-2">
+                Username <span className="text-primary">*</span>
+              </Label>
 
-            <div className="grid gap-2">
-              <Label htmlFor="email">Email</Label>
               <Input
-                id="email"
                 type="email"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
                 placeholder="m@example.com"
-                required
+                disabled={isSubmitting}
+                {...register("email", {
+                  required: "Email is required",
+                })}
+                className={errors.email ? "border-destructive" : ""}
               />
+
+              {errors.email && (
+                <span className="text-destructive text-xs">
+                  {errors.email.message}
+                </span>
+              )}
             </div>
 
-            <div className="grid gap-2">
-              <div className="flex items-center">
-                <Label htmlFor="password">Password</Label>
-                <Link
-                  href="#"
-                  className="ml-auto inline-block text-sm underline"
+            {/* Password */}
+            <div className="grid gap-1">
+              <Label className="mb-2">
+                Password <span className="text-primary">*</span>
+              </Label>
+
+              <div className="relative">
+                <Input
+                  type={showPassword ? "text" : "password"}
+                  placeholder="example123"
+                  disabled={isSubmitting}
+                  {...register("password", {
+                    required: "Password is required",
+                  })}
+                  className={`pr-10 ${
+                    errors.password ? "border-destructive" : ""
+                  }`}
+                />
+
+                <button
+                  type="button"
+                  onClick={() => setShowPassword((prev) => !prev)}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500"
                 >
-                  Forgot your password?
-                </Link>
+                  {showPassword ? (
+                    <EyeOff className="h-4 w-4" />
+                  ) : (
+                    <Eye className="h-4 w-4" />
+                  )}
+                </button>
               </div>
-              <Input
-                id="password"
-                type="password"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                placeholder="example123"
-                required
-              />
+
+              {errors.password && (
+                <span className="text-destructive text-xs">
+                  {errors.password.message}
+                </span>
+              )}
             </div>
 
-            {errorMsg && (
-              <p className="text-red-600 text-sm text-center">{errorMsg}</p>
+            {/* Auth Error */}
+            {errors.root && (
+              <p className="text-destructive text-sm text-center">
+                {errors.root.message}
+              </p>
             )}
-            <Button type="submit" className="w-full">
-              Login
-            </Button>
-          </form>
 
-          {/* <div className="mt-4 text-center text-sm">
-            Don&apos;t have an account?{" "}
-            <Link href="/signup" className="underline">
-              Sign up
-            </Link>
-          </div> */}
+            {/* Submit */}
+            <Button
+              type="submit"
+              disabled={isSubmitting}
+              className="w-full mt-3 rounded-full bg-primary hover:bg-primary/80"
+            >
+              {isSubmitting ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  Processing...
+                </>
+              ) : (
+                <>
+                  <LogIn className="mr-2 h-4 w-4" />
+                  Login
+                </>
+              )}
+            </Button>
+
+          </form>
         </CardContent>
       </Card>
     </div>

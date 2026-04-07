@@ -1,390 +1,185 @@
 "use client";
 
-import { useState } from "react";
-import { EllipsisVertical, Search, UserPlus } from "lucide-react";
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-  DialogFooter,
-  DialogClose,
-} from "@/components/ui/dialog";
-import { useRouter } from "next/navigation";
-import { ThemeCustomizer } from "@/components/global/custom-theme/page";
+import { useEffect, useMemo, useState } from "react";
+import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
+import { Plus, Building2, Shield, Users } from "lucide-react";
+import type { LucideIcon } from "lucide-react";
+import { AddOrganizationDialog } from "./component/modals/add-organization-dialog";
+import { AddRoleDialog } from "./component/modals/add-role-dialog";
+import { AddUserDialog } from "./component/modals/add-user-dialog";
+import Roles from "./component/roles";
+import UserList from "./component/user-list";
+import Organization from "./component/Organization";
+import { useTabsList } from "./component/api";
+import { RootState } from "@/redux/store";
+import { useSelector } from "react-redux";
+import { toast } from "sonner";
+import { TabItem } from "@/interface/interface";
 
-const initialUsers = [
-  {
-    name: "Sarah Johnson",
-    email: "sarah.johnson@company.com",
-    dept: "Engineering",
-    role: "Admin",
-    status: "Active",
-    lastActive: "2 minutes ago",
-  },
-  {
-    name: "Alex Chen",
-    email: "alex.chen@company.com",
-    dept: "Product",
-    role: "Manager",
-    status: "Active",
-    lastActive: "1 hour ago",
-  },
-  {
-    name: "Emma Williams",
-    email: "emma.williams@company.com",
-    dept: "Design",
-    role: "User",
-    status: "Active",
-    lastActive: "3 hours ago",
-  },
-  {
-    name: "James Rivera",
-    email: "james.rivera@company.com",
-    dept: "Marketing",
-    role: "Viewer",
-    status: "Inactive",
-    lastActive: "2 days ago",
-  },
-  {
-    name: "Lisa Anderson",
-    email: "lisa.anderson@company.com",
-    dept: "Engineering",
-    role: "Manager",
-    status: "Active",
-    lastActive: "30 minutes ago",
-  },
-];
+const iconMap: Record<string, LucideIcon> = {
+  Building2,
+  Shield,
+  Users,
+};
 
-export default function TeamPage() {
-  const [users, setUsers] = useState(initialUsers);
-  const [search, setSearch] = useState("");
-  const [fullName, setFullName] = useState("");
-  const [email, setEmail] = useState("");
-  const [dept, setDept] = useState("");
-  const [role, setRole] = useState("User - Standard access");
-  const [isAddMember, setIsAddMember] = useState(false);
-  // Handle Add Member
-  const handleAddMember = () => {
-    setUsers([
-      ...users,
-      {
-        name: fullName,
-        email,
-        dept,
-        role:
-          role === "User - Standard access"
-            ? "User"
-            : role === "Manager - Team permissions"
-            ? "Manager"
-            : "Admin",
-        status: "Active",
-        lastActive: "Just now",
-      },
-    ]);
+export default function UserManagement() {
+  const [isOrgDialogOpen, setIsOrgDialogOpen] = useState(false);
+  const [isRoleDialogOpen, setIsRoleDialogOpen] = useState(false);
+  const [isUserDialogOpen, setIsUserDialogOpen] = useState(false);
+  const features = useSelector((state: RootState) => state.feature.features);
+  const { data, isLoading } = useTabsList();
+  const tabsList = Array.isArray(data) ? data : (data?.data ?? []);
 
-    // Reset form
-    setFullName("");
-    setEmail("");
-    setDept("");
-    setRole("User - Standard access");
+  const uamPermissions = useMemo(() => {
+    if (!Array.isArray(features)) return {};
+    const uamGroup = features.find((grp) => grp.feature_grp_name === "UAM");
+    const list = uamGroup?.feature_list ?? [];
+    return list.reduce<Record<string, number>>((acc, feature) => {
+      if (!feature?.feature_name) return acc;
+      acc[feature.feature_name.toLowerCase()] = feature.permission_level ?? 0;
+      return acc;
+    }, {});
+  }, [features]);
+
+  // const accessibleTabs = useMemo(() => {
+  //   return tabsList?.filter((tab: TabItem) => tab.access === 1) ?? [];
+  // }, [tabsList?.length]);
+
+  const accessibleTabs = useMemo(() => {
+    return (
+      tabsList?.filter((tab: TabItem) => {
+        if (tab.access !== 1) return false;
+        const tabName = tab.tab_name.toLowerCase();
+        const permission = uamPermissions[tabName];
+        if (permission === 1) return false;
+
+        return true;
+      }) ?? []
+    );
+  }, [tabsList, uamPermissions]);
+
+  const [activeTab, setActiveTab] = useState<string>("");
+
+  useEffect(() => {
+    if (!accessibleTabs.length) return;
+    const stored = localStorage.getItem("activeTab");
+    const validStoredTab = accessibleTabs.find(
+      (t: any) => t.tab_name.toLowerCase() === stored,
+    );
+
+    if (validStoredTab) {
+      setActiveTab(stored!);
+    } else {
+      const first = accessibleTabs[0].tab_name.toLowerCase();
+      setActiveTab(first);
+      localStorage.setItem("activeTab", first);
+    }
+  }, [accessibleTabs]);
+
+  const handleAddClick = (tabName: string) => {
+    const name = tabName.toLowerCase().trim();
+    const permission = uamPermissions[name];
+
+    if (![3, 4].includes(permission)) {
+      toast.error("You do not have permission to perform this action.");
+      return;
+    }
+    if (name.includes("org")) {
+      setIsOrgDialogOpen(true);
+    } else if (name.includes("role")) {
+      setIsRoleDialogOpen(true);
+    } else if (name.includes("user")) {
+      setIsUserDialogOpen(true);
+    }
   };
 
-  // Filter users
-  const filteredUsers = users.filter((u) =>
-    `${u.name} ${u.email} ${u.dept}`
-      .toLowerCase()
-      .includes(search.toLowerCase())
+  const activeTabData = accessibleTabs.find(
+    (tab: any) => tab.tab_name.toLowerCase() === activeTab,
   );
 
+  if (isLoading) {
+    return <div className="p-6">Loading tabs...</div>;
+  }
+
+  if (!tabsList.length) {
+    return (
+      <div className="p-6">
+        <p className="text-muted-foreground">No tabs available.</p>
+      </div>
+    );
+  }
+
   return (
-    <div className="h-screen">
-      <div className="container mx-auto px-4 py-2">
-        <div className="my-2 gap-2 flex items-end justify-end">
-          <Button
-            variant="default"
-            onClick={() => {
-              setIsAddMember(true);
-            }}
-            size="sm"
-            className="border border-gray-300/40 text-white bg-primary/80"
-          >
-            <UserPlus size={18} />
-            Add Member
-          </Button>
-          <div className="relative w-64">
-            <Search
-              className="absolute left-4 top-2 text-slate-400"
-              size={18}
-            />
-            <input
-              type="text"
-              placeholder="Search members, emails, departments..."
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              className="w-full rounded-lg bg-white py-1 items-center pl-12 pr-4 text-gray-700 shadow-sm outline-none ring-1 ring-slate-300"
-            />
-          </div>
-        </div>
-
-        {/* TABLE */}
-        {/* <div className="overflow-hidden rounded-xl bg-white shadow-sm ring-1 ring-slate-200">
-        <table className="w-full text-left">
-          <thead className="bg-gradient-to-r from-[var(--primary)] to-[var(--accent)] text-light">
-            <tr>
-              <th className="px-6 py-4 text-sm">User</th>
-              <th className="px-6 py-4 text-sm">Department</th>
-              <th className="px-6 py-4 text-sm">Role</th>
-              <th className="px-6 py-4 text-sm">Status</th>
-              <th className="px-6 py-4 text-sm">Last Active</th>
-              <th className="px-6 py-4 text-sm text-right">Actions</th>
-            </tr>
-          </thead>
-
-          <tbody className="divide-y divide-slate-100">
-            {filteredUsers.map((u, i) => {
-              const initials = u.name
-                .split(" ")
-                .map((w) => w[0])
-                .join("");
-
+    <div className="p-6">
+      <div className="mb-6">
+        <h1 className="text-2xl font-bold text-foreground">User Management</h1>
+        <p className="text-sm text-muted-foreground mt-1">
+          Manage your organization, roles, and users
+        </p>
+      </div>
+      <Tabs
+        value={activeTab}
+        onValueChange={(val) => {
+          setActiveTab(val);
+          localStorage.setItem("activeTab", val);
+        }}
+        className="w-full"
+      >
+        <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+          <TabsList className="bg-muted/60 p-1 h-auto">
+            {accessibleTabs.map((tab: TabItem) => {
+              const IconComponent = iconMap[tab.icon];
               return (
-                <tr key={i} className="hover:bg-slate-50">
-                  <td className="px-6 py-4">
-                    <div className="flex items-center gap-3">
-                      <div className="flex h-10 w-10 items-center justify-center rounded-full bg-purple-100 text-sm font-semibold text-purple-700">
-                        {initials}
-                      </div>
-                      <div>
-                        <div className="font-medium text-slate-800">
-                          {u.name}
-                        </div>
-                        <div className="text-sm text-slate-500">{u.email}</div>
-                      </div>
-                    </div>
-                  </td>
-
-                  
-                  <td className="px-6 py-4 text-slate-700">{u.dept}</td>
-
-                  <td className="px-6 py-4">
-                    <span
-                      className={`rounded-full px-3 py-1 text-xs font-medium ${
-                        u.role === "Admin"
-                          ? "bg-red-100 text-red-700"
-                          : u.role === "Manager"
-                          ? "bg-blue-100 text-blue-700"
-                          : u.role === "Viewer"
-                          ? "bg-gray-200 text-gray-700"
-                          : "bg-green-100 text-green-700"
-                      }`}
-                    >
-                      {u.role}
-                    </span>
-                  </td>
-
-                  <td className="px-6 py-4">
-                    <span className="flex items-center gap-2">
-                      <span
-                        className={`h-2 w-2 rounded-full ${
-                          u.status === "Active" ? "bg-green-500" : "bg-gray-400"
-                        }`}
-                      ></span>
-                      <span
-                        className={`text-sm ${
-                          u.status === "Active"
-                            ? "text-green-700"
-                            : "text-gray-500"
-                        }`}
-                      >
-                        {u.status}
-                      </span>
-                    </span>
-                  </td>
-
-                  <td className="px-6 py-4 text-slate-600">{u.lastActive}</td>
-
-                  <td className="px-6 py-4 text-right">
-                    <button className="rounded-md p-2 hover:bg-slate-100">
-                      <EllipsisVertical className="text-slate-600" size={18} />
-                    </button>
-                  </td>
-                </tr>
+                <TabsTrigger
+                  key={tab.tab_name}
+                  value={tab.tab_name.toLowerCase()}
+                  className="gap-2 px-4 py-2 text-sm font-medium data-[state=active]:bg-primary 
+                  data-[state=active]:text-primary-foreground data-[state=active]:shadow-md transition-all duration-200"
+                >
+                  <IconComponent className="size-4" />
+                  {tab.tab_name}
+                </TabsTrigger>
               );
             })}
-          </tbody>
-        </table>
-      </div> */}
-        {/* USER CARD GRID */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 mt-4">
-          {filteredUsers.map((u, i) => {
-            const initials = u.name
-              .split(" ")
-              .map((w) => w[0])
-              .join("");
+          </TabsList>
 
-            return (
-              <div
-                key={i}
-                className="bg-white rounded-xl p-5 shadow-sm ring-1 ring-slate-200 hover:shadow-md transition"
-              >
-                <div className="flex justify-between items-start">
-                  <div className="flex items-center gap-3">
-                    <div className="flex h-12 w-12 items-center justify-center rounded-full bg-purple-100 text-base font-semibold text-gray-700">
-                      {initials}
-                    </div>
-                    <div>
-                      <h3 className="font-semibold text-slate-800">{u.name}</h3>
-                      <p className="text-sm text-slate-500">{u.email}</p>
-                    </div>
-                  </div>
-
-                  <button className="rounded-md p-1 hover:bg-slate-100">
-                    <EllipsisVertical className="text-slate-600" size={20} />
-                  </button>
-                </div>
-
-                <div className="mt-4 space-y-2 text-sm">
-                  <p className="text-slate-700">
-                    <span className="font-semibold">Department:</span> {u.dept}
-                  </p>
-
-                  <p className="flex items-center text-slate-700 gap-2">
-                    <span className="font-semibold">Role:</span>
-                    <span
-                      className={`rounded-full px-3 py-1 text-xs font-medium ${
-                        u.role === "Admin"
-                          ? "bg-red-100 text-red-700"
-                          : u.role === "Manager"
-                          ? "bg-blue-100 text-blue-700"
-                          : u.role === "Viewer"
-                          ? "bg-gray-200 text-gray-700"
-                          : "bg-green-100 text-green-700"
-                      }`}
-                    >
-                      {u.role}
-                    </span>
-                  </p>
-
-                  <p className="flex items-center text-slate-700 gap-2">
-                    <span className="font-semibold">Status:</span>
-                    <span
-                      className={`h-2 w-2 rounded-full ${
-                        u.status === "Active" ? "bg-green-500" : "bg-gray-400"
-                      }`}
-                    ></span>
-                    <span
-                      className={`${
-                        u.status === "Active"
-                          ? "text-green-700"
-                          : "text-gray-500"
-                      }`}
-                    >
-                      {u.status}
-                    </span>
-                  </p>
-
-                  <p className="text-slate-600">
-                    <span className="font-semibold">Last Active:</span>{" "}
-                    {u.lastActive}
-                  </p>
-                </div>
-              </div>
-            );
-          })}
+          <Button
+            onClick={() => handleAddClick(activeTab)}
+            className="gap-2 shadow-sm hover:shadow-md transition-shadow text-text"
+          >
+            <Plus className="size-4" />
+            Add {activeTabData?.add_button}
+          </Button>
         </div>
-      </div>
 
-      <Dialog open={isAddMember} onOpenChange={setIsAddMember}>
-        <DialogTrigger asChild></DialogTrigger>
+        {accessibleTabs.map((tab: TabItem) => {
+          const value = tab.tab_name.toLowerCase();
 
-        <DialogContent className="rounded-2xl p-6 max-w-xl">
-          <DialogHeader>
-            <DialogTitle className="text-2xl font-semibold">
-              <span>Add Team Member</span>
-            </DialogTitle>
-          </DialogHeader>
+          return (
+            <TabsContent key={tab.tab_name} value={value} className="mt-2">
+              <div className="rounded-lg border border-border bg-card p-3 shadow-sm">
+                {value.includes("org") && <Organization />}
+                {value.includes("role") && <Roles />}
+                {value.includes("user") && <UserList />}
+              </div>
+            </TabsContent>
+          );
+        })}
+      </Tabs>
 
-          {/* FORM */}
-          <form className="mt-4 space-y-5" onSubmit={(e) => e.preventDefault()}>
-            {/* Full Name */}
-            <div>
-              <label className="text-sm font-medium text-light">
-                Full Name
-              </label>
-              <input
-                type="text"
-                value={fullName}
-                onChange={(e) => setFullName(e.target.value)}
-                placeholder="John Doe"
-                className="w-full mt-2 rounded-xl border border-gray-300 px-4 py-3 outline-none focus:border-purple-500 focus:ring-2 focus:ring-purple-300"
-              />
-            </div>
-
-            {/* Email */}
-            <div>
-              <label className="text-sm font-medium text-light">
-                Email Address
-              </label>
-              <input
-                type="email"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                placeholder="john@company.com"
-                className="w-full mt-2 rounded-xl border border-gray-300 px-4 py-3 outline-none focus:border-purple-500 focus:ring-2 focus:ring-purple-300"
-              />
-            </div>
-
-            {/* Department */}
-            <div>
-              <label className="text-sm font-medium text-light">
-                Department
-              </label>
-              <input
-                type="text"
-                value={dept}
-                onChange={(e) => setDept(e.target.value)}
-                placeholder="e.g. Engineering, Design, Product"
-                className="w-full mt-2 rounded-xl border border-gray-300 px-4 py-3 outline-none focus:border-purple-500 focus:ring-2 focus:ring-purple-300"
-              />
-            </div>
-
-            {/* Role */}
-            <div>
-              <label className="text-sm font-medium text-light">Role</label>
-              <select
-                value={role}
-                onChange={(e) => setRole(e.target.value)}
-                className="w-full mt-2 rounded-xl border text-gray-600 border-gray-300 px-4 py-3 bg-white outline-none focus:border-purple-500 focus:ring-2 focus:ring-purple-300"
-              >
-                <option>User - Standard access</option>
-                <option>Manager - Team permissions</option>
-                <option>Admin - Full access</option>
-              </select>
-            </div>
-          </form>
-
-          {/* Footer Buttons */}
-          <DialogFooter className="mt-6 flex justify-end gap-3">
-            <DialogClose asChild>
-              <button className="rounded-xl px-5 py-2 border border-gray-300/70 text-light hover:bg-gray-400">
-                Cancel
-              </button>
-            </DialogClose>
-
-            <DialogClose asChild>
-              <button
-                onClick={handleAddMember}
-                className="rounded-xl px-5 py-2 bg-primary/80 text-white border border-gray-300/70"
-              >
-                Add Member
-              </button>
-            </DialogClose>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+      <AddOrganizationDialog
+        open={isOrgDialogOpen}
+        onOpenChange={setIsOrgDialogOpen}
+      />
+      <AddRoleDialog
+        open={isRoleDialogOpen}
+        onOpenChange={setIsRoleDialogOpen}
+      />
+      <AddUserDialog
+        open={isUserDialogOpen}
+        onOpenChange={setIsUserDialogOpen}
+      />
     </div>
   );
 }
